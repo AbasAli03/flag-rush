@@ -1,7 +1,5 @@
-
 *.prefs
 *.class
-*.fxml
 *.class
 *.xml
 *.xml
@@ -12,3 +10,5 @@ pom.xml
 *.properties
 *.xml
 *.MF
+settings/settings.json
+

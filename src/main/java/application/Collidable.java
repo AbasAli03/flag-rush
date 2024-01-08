@@ -1,8 +1,8 @@
 package application;
 
 public interface Collidable {
-	    double getX();
-	    double getY();
+	    int getX();
+	    int getY();
 	    int getwidth();
 	    int getHeight();
 }
