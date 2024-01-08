@@ -8,11 +8,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    public static Canvas canvas = new Canvas(400,400);
-    public static Parent root;
+    public static Canvas canvas = new Canvas(1000,700);
+    public static BorderPane root;
     public static Scene scene;
     public static Stage stage;
 
@@ -20,11 +21,16 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         try {
         	stage = primaryStage;
-        	root = FXMLLoader.load(getClass().getResource("Home.fxml"));
-        	scene = new Scene(root);
+        	root = new BorderPane();
+        	root.getChildren().add(canvas);
+
+            Scene scene = new Scene(root, 1000, 700);
         	stage.setScene(scene);
         	stage.show();
             canvas.setFocusTraversable(true);
+            Game game = new Game();
+            
+            game.startGame();
             
            
         } catch (Exception e) {

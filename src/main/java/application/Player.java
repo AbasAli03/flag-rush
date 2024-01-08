@@ -54,5 +54,17 @@ public BulletController bulletController;
         ctx.fillRect(x, y, width, height);
 
     }
+    
+	public boolean isColliding(Collidable obj) {
+		
+		if (this.x < obj.getX() + obj.getwidth() &&
+			this.x + this.width > obj.getX() &&
+			this.y < obj.getY() + obj.getHeight() &&
+			this.y + this.height > obj.getY()) {
+			return true;
+		}
+		
+		return false;
+	}
 
 }

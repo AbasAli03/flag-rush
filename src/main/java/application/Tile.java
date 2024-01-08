@@ -2,7 +2,7 @@ package application;
 
 
 import javafx.scene.image.*;
-
+import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
 
 public class Tile implements Collidable{
@@ -12,7 +12,7 @@ public class Tile implements Collidable{
 	public int height;
 	public int width;
 
-	public Tile(Image image, int x, int y, int height, int width) {
+	public Tile(int x, int y, int height, int width) {
 		this.image = image;
 		this.x = x;
 		this.y = y;
@@ -21,7 +21,8 @@ public class Tile implements Collidable{
 	}
 
 	public void draw(GraphicsContext ctx) {
-		ctx.drawImage(image,x,y,height,width);
+		ctx.setFill(Color.YELLOW);
+		ctx.fillRect(x, y, width, height);
 	}
 
 	@Override
