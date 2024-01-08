@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.Pane?>
+
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.HomeController">
+   <children>
+      <Button layoutX="212.0" layoutY="177.0" mnemonicParsing="false" onAction="#joinServer" prefHeight="46.0" prefWidth="176.0" text="Join server" />
+      <Button layoutX="212.0" layoutY="92.0" mnemonicParsing="false" onAction="#startServer" prefHeight="46.0" prefWidth="176.0" text="Start Server" />
+      <Button layoutX="212.0" layoutY="259.0" mnemonicParsing="false" onAction="#joinRandomGame" prefHeight="46.0" prefWidth="176.0" text="Join random Game" />
+   </children>
+</Pane>
