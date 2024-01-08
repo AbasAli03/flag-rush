@@ -15,11 +15,16 @@
               <artifactId>common</artifactId>
               <version>[0.0,)</version>
           </dependency>
-          <dependency>
-          	<groupId>dtu</groupId>
-          	<artifactId>Hello_JavaFX</artifactId>
-          	<version>SNAPSHOT 0.0.1</version>
-          </dependency>
+            <dependency>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-controls</artifactId>
+    <version>11</version>
+  </dependency>
+  <dependency>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-fxml</artifactId>
+    <version>22-ea+16</version>
+</dependency>
     </dependencies>
     <build>
         <plugins>
