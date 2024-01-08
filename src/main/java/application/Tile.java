@@ -7,12 +7,12 @@ import javafx.scene.canvas.GraphicsContext;
 
 public class Tile implements Collidable{
 	private Image image;
-	public double x;
-	public double y;
+	public int x;
+	public int y;
 	public int height;
 	public int width;
 
-	public Tile(Image image, double x, double y, int height, int width) {
+	public Tile(Image image, int x, int y, int height, int width) {
 		this.image = image;
 		this.x = x;
 		this.y = y;
@@ -25,12 +25,12 @@ public class Tile implements Collidable{
 	}
 
 	@Override
-	public double getX() {
+	public int getX() {
 		return x;
 	}
 
 	@Override
-	public double getY() {
+	public int getY() {
 		return y;
 	}
 
