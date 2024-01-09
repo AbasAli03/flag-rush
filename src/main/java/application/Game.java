@@ -105,43 +105,43 @@ public class Game {
 			break;
         }
     }
-
     private void update() {
-
-        
-         SPEED = 5;
-
+        SPEED = 5;
+    
+        int deltaX = 0;
+        int deltaY = 0;
+    
         if (wPressed) {
-            player.y -= SPEED;
+            deltaY = -SPEED;
         } else if (aPressed) {
-            player.x -= SPEED;
+            deltaX = -SPEED;
         } else if (sPressed) {
-            player.y += SPEED;
+            deltaY = SPEED;
         } else if (dPressed) {
-            player.x += SPEED;
+            deltaX = SPEED;
         }
-        
-        boolean isColliding = false;
+    
+        // Check for collision before updating the player position
+        if (!isCollidingWithTiles(player.x + deltaX, player.y + deltaY)) {
+            player.x += deltaX;
+            player.y += deltaY;
+        }
+    
+        // Reset SPEED to its default value after the collision check
+        SPEED = 5;
+    }
+    
+    private boolean isCollidingWithTiles(int newX, int newY) {
         for (Tile tile : tiles) {
-            if (player.isColliding(tile)) {
-                SPEED = 0;
-                break;
+            if (newX < tile.getX() + tile.getwidth() &&
+                newX + player.getwidth() > tile.getX() &&
+                newY < tile.getY() + tile.getHeight() &&
+                newY + player.getHeight() > tile.getY()) {
+                return true;  // Collision detected
             }
         }
-
-        // Additional game logic can be added here
-
-        // if(ePressed) {
-        //    int speed = 5;
-        //    int delay = 7;
-        //    int damage = 1;
-        //    int bulletX = player.x + player.width / 2;
-        //    int bulletY = player.y;
-        //    player.bulletController.shoot(bulletX, bulletY, speed, damage, delay);
-        // }
+        return false;  // No collision
     }
-
-
     private void draw() {
         // Clear canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
