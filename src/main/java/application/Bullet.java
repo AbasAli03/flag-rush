@@ -13,7 +13,6 @@ public class Bullet {
 	private  Color color;
 	
 	public Bullet(int x, int y, int speed, int damage) {
-		super();
 		this.x = x;
 		this.y = y;
 		this.speed = speed;

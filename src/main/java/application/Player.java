@@ -14,10 +14,11 @@ public class Player implements Collidable {
     public boolean flagEquipped;
     public int health;
     public int speed =  Game.SPEED;
+    public Base base;
 public BulletController bulletController;
-    public Player(int x, int y, int baseX, int baseY, int height, int width, Color color,BulletController bulletController) {
+    public Player(int x, int y, Base base, int height, int width, Color color,BulletController bulletController) {
         this.bulletController =bulletController;
-
+        this.base = base;
         this.x = x;
         this.y = y;
         this.baseX = baseX;
@@ -53,7 +54,8 @@ public BulletController bulletController;
     public void draw(GraphicsContext ctx) {
         ctx.setFill(this.color);
         ctx.fillRect(x, y, width, height);
-
+        base.draw(ctx, this.color);
+        
     }
     
 	public boolean isColliding(Collidable obj) {

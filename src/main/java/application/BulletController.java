@@ -1,5 +1,6 @@
 package application;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.scene.canvas.GraphicsContext;
@@ -10,7 +11,7 @@ public class BulletController {
 	private int time = 0;
 	
 	public BulletController() {
-			
+		bullets = new ArrayList<>(); 
 	}
 	
 	

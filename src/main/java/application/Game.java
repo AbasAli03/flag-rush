@@ -4,9 +4,13 @@ package application;
 import java.util.ArrayList;
 
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+
 
 public class Game {
 
@@ -31,9 +35,10 @@ public class Game {
     private static final double TARGET_UPS = 60.0; // Target updates per second
     private static final double TIME_PER_UPDATE = 1.0 / TARGET_UPS;
     long lastUpdateTime;
+    AnimationTimer gameLoop;
     GraphicsContext ctx = Main.canvas.getGraphicsContext2D();
     BulletController bulletController1 = new BulletController();
-    Player player = new Player(40,40,10,10,BOXW,BOXH,Color.BLUE,bulletController1);
+    Player player = new Player(40,40,new Base(40,40),BOXW,BOXH,Color.BLUE,bulletController1);
     Flag flag = new Flag(WIDTH/2,HEIGHT/2,WIDTH/2,HEIGHT/2,BOXW/2,BOXH/2);
 
     boolean wPressed = false;
@@ -41,7 +46,10 @@ public class Game {
     boolean sPressed = false;
     boolean dPressed = false;
     boolean ePressed = false;
-    int eCount = 0;
+    boolean winner = false;
+    boolean spacePressed = false;
+    String lastPressed = "";
+    
     public static void initializeGrid() {
         // Fill edges with 1s
         for (int i = 0; i < ROWS; i++) {
@@ -78,6 +86,8 @@ public class Game {
                 break;
             case E: 
             	ePressed = false;
+            case SPACE:
+            	spacePressed = false;
             // Add more cases if needed for other keys
 		default:
 			break;
@@ -100,25 +110,43 @@ public class Game {
                 break;
             case E: 
             	ePressed = true;
+            case SPACE:
+            	spacePressed = true;
             // Add more cases if needed for other keys
 		default:
 			break;
         }
     }
     private void update() {
+    	
         SPEED = 5;
     
         int deltaX = 0;
         int deltaY = 0;
     
         if (wPressed) {
+        	lastPressed = "W";
             deltaY = -SPEED;
         } else if (aPressed) {
+        	lastPressed = "A";
             deltaX = -SPEED;
         } else if (sPressed) {
+        	lastPressed = "S";
             deltaY = SPEED;
         } else if (dPressed) {
+        	lastPressed = "D";
             deltaX = SPEED;
+        } else if(spacePressed) {
+        	int speed = 5;
+                int delay = 7;
+                int damage = 1;
+                
+                if(lastPressed.equals("W")) {
+                	int bulletX = player.x + player.width / 2;
+                    int bulletY = player.y;
+                    player.bulletController.shoot(bulletX, bulletY, speed, damage, delay);
+
+                }
         }
     
         if (!isCollidingWithTiles(player.x + deltaX, player.y + deltaY)) {
@@ -145,15 +173,35 @@ public class Game {
         // move flag with player
         if (player.flagEquipped && flag.equiped) {
             flag.x = player.x + 5;
-            flag.y = player.y + 5;
-        }
+            flag.y = player.y + 5; 
+            
+       
     
+        }
+        int dropRange = 50;
+
+        if(Math.abs(player.base.x - flag.x) < dropRange && Math.abs(player.base.y - flag.y) < dropRange && !flag.equiped && !player.flagEquipped) {
+        	gameLoop.stop();
+        	displayWinnerPopup();
+        	
+        }
+        
+       
         
         
         
         
     }
-    
+    private void displayWinnerPopup() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Winner!");
+            alert.setHeaderText(null);
+            alert.setContentText("Congratulations! You are the winner.");
+
+            alert.showAndWait();
+        });
+    }
     private boolean isCollidingWithTiles(int newX, int newY) {
         for (Tile tile : tiles) {
             if (newX < tile.getX() + tile.getwidth() &&
@@ -179,7 +227,7 @@ public class Game {
     }
    
     
-   
+  
     public void startGame() {
         // Set up key event handlers for the canvas
         Main.canvas.setOnKeyReleased(this::handleKeyReleased);
@@ -189,7 +237,7 @@ public class Game {
         lastUpdateTime = System.nanoTime();
 
         // Set up the game loop
-        AnimationTimer gameLoop = new AnimationTimer() {
+         gameLoop = new AnimationTimer() {
             double accumulatedTime = 0.0;
 
             @Override
@@ -211,5 +259,6 @@ public class Game {
 
         // Start the game loop
         gameLoop.start();
+        
     }
 }
