@@ -21,7 +21,7 @@ public class Tile implements Collidable{
 	}
 
 	public void draw(GraphicsContext ctx) {
-		ctx.setFill(Color.YELLOW);
+		ctx.setFill(Color.CHOCOLATE);
 		ctx.fillRect(x, y, width, height);
 	}
 

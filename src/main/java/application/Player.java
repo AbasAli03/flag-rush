@@ -13,6 +13,7 @@ public class Player implements Collidable {
     private Color color;
     public boolean flagEquipped;
     public int health;
+    public int speed =  Game.SPEED;
 public BulletController bulletController;
     public Player(int x, int y, int baseX, int baseY, int height, int width, Color color,BulletController bulletController) {
         this.bulletController =bulletController;
@@ -57,10 +58,10 @@ public BulletController bulletController;
     
 	public boolean isColliding(Collidable obj) {
 		
-		if (this.x < obj.getX() + obj.getwidth() &&
-			this.x + this.width > obj.getX() &&
-			this.y < obj.getY() + obj.getHeight() &&
-			this.y + this.height > obj.getY()) {
+		if (this.x + speed  < obj.getX() + obj.getwidth() &&
+			this.x + this.width - speed > obj.getX() &&
+			this.y + speed < obj.getY() + obj.getHeight() &&
+			this.y + this.height + speed > obj.getY()) {
 			return true;
 		}
 		

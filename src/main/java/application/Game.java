@@ -13,7 +13,7 @@ public class Game {
   
     public static final int HEIGHT = 700;
     public static final int WIDTH = 1000;
-    public static final int SPEED = 5;
+    public static int SPEED = 5;
     public static final int BOXW = 20;
     public static final int BOXH = 20;  
     public static final int ROWS = WIDTH/BOXW;
@@ -40,7 +40,7 @@ public class Game {
     boolean sPressed = false;
     boolean dPressed = false;
     boolean ePressed = false;
-    
+    boolean isColliding =  false;
     
     public static void initializeGrid() {
         // Fill edges with 1s
@@ -107,37 +107,40 @@ public class Game {
     }
 
     private void update() {
-  
-    	 tiles.forEach(tile -> {
-    		 	
-         });	
-    	 	
-         		  	if(wPressed && !player.isColliding(null)) {
-         	            player.y -= SPEED;
-         	        }
-         	        else if (aPressed) {
-         	            player.x -= SPEED;
-         	        }
-         	        else if (sPressed) {
-         	            player.y += SPEED;
-         	        }
-         	        else if (dPressed) {
-         	            player.x += SPEED;
-         	        } 
-    
-         	
-      // if(ePressed) {
+
+        
+         SPEED = 5;
+
+        if (wPressed) {
+            player.y -= SPEED;
+        } else if (aPressed) {
+            player.x -= SPEED;
+        } else if (sPressed) {
+            player.y += SPEED;
+        } else if (dPressed) {
+            player.x += SPEED;
+        }
+        
+        boolean isColliding = false;
+        for (Tile tile : tiles) {
+            if (player.isColliding(tile)) {
+                SPEED = 0;
+                break;
+            }
+        }
+
+        // Additional game logic can be added here
+
+        // if(ePressed) {
         //    int speed = 5;
-          //  int delay = 7;
-           // int damage = 1;
-           // int bulletX = player.x + player.width / 2;
-           // int bulletY = player.y;
-           // player.bulletController.shoot(bulletX, bulletY, speed, damage, delay);
+        //    int delay = 7;
+        //    int damage = 1;
+        //    int bulletX = player.x + player.width / 2;
+        //    int bulletY = player.y;
+        //    player.bulletController.shoot(bulletX, bulletY, speed, damage, delay);
         // }
-       
-
-
     }
+
 
     private void draw() {
         // Clear canvas
