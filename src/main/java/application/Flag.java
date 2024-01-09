@@ -4,6 +4,7 @@ package application;
 import javafx.scene.canvas.*;
 
 import javafx.scene.image.*;
+import javafx.scene.paint.Color;
 
 public class Flag {
 
@@ -14,11 +15,9 @@ public class Flag {
 	private int spawnY;
 	public int height;
 	public int width;
-	private boolean equiped = false;
+	public boolean equiped = false;
 	
-	public Flag(Image image, int x, int y, int spawnX, int spawnY, int height, int width) {
-		super();
-		this.image = image;
+	public Flag(int x, int y, int spawnX, int spawnY, int height, int width) {
 		this.x = x;
 		this.y = y;
 		this.spawnX = spawnX;
@@ -29,7 +28,9 @@ public class Flag {
 
 
 	public void draw(GraphicsContext ctx) {
-		ctx.drawImage(image, x, y,height,width);
+		
+		   ctx.setFill(Color.PINK);
+	        ctx.fillRect(x, y, width, height);
 	}
 	
 	

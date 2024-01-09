@@ -34,6 +34,7 @@ public class Game {
     GraphicsContext ctx = Main.canvas.getGraphicsContext2D();
     BulletController bulletController1 = new BulletController();
     Player player = new Player(40,40,10,10,BOXW,BOXH,Color.BLUE,bulletController1);
+    Flag flag = new Flag(WIDTH/2,HEIGHT/2,WIDTH/2,HEIGHT/2,BOXW/2,BOXH/2);
 
     boolean wPressed = false;
     boolean aPressed = false;
@@ -121,14 +122,34 @@ public class Game {
             deltaX = SPEED;
         }
     
-        // Check for collision before updating the player position
         if (!isCollidingWithTiles(player.x + deltaX, player.y + deltaY)) {
             player.x += deltaX;
             player.y += deltaY;
         }
     
-        // Reset SPEED to its default value after the collision check
         SPEED = 5;
+        
+        // flag movement
+        if((player.x + 5 > flag.x  || player.x < flag.x) && (player.y + 5 > flag.y  || player.y < flag.y)) {
+        	if(ePressed) {
+        		flag.equiped = true;
+        		player.flagEquipped = true;
+        	}
+        }
+        
+        if(player.flagEquipped && flag.equiped) {
+        	flag.x = player.x;
+        	flag.y = player.y;
+//        	if(ePressed) {
+//        		flag.equiped = false;
+//        		player.flagEquipped = false;
+//        	}
+        }
+    
+        
+        
+        
+        
     }
     
     private boolean isCollidingWithTiles(int newX, int newY) {
@@ -147,6 +168,7 @@ public class Game {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
     
         player.draw(ctx);
+        flag.draw(ctx);
         tiles.forEach(tile -> {
         	tile.draw(ctx);
         });
