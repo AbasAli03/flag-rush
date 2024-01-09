@@ -13,11 +13,12 @@ public class Player implements Collidable {
     private Color color;
     public boolean flagEquipped;
     public int health;
-    public int speed =  Game.SPEED;
+    public int speed = Game.SPEED;
     public Base base;
-public BulletController bulletController;
-    public Player(int x, int y, Base base, int height, int width, Color color,BulletController bulletController) {
-        this.bulletController =bulletController;
+    public BulletController bulletController;
+
+    public Player(int x, int y, Base base, int height, int width, Color color, BulletController bulletController) {
+        this.bulletController = bulletController;
         this.base = base;
         this.x = x;
         this.y = y;
@@ -26,7 +27,7 @@ public BulletController bulletController;
         this.height = height;
         this.width = width;
         this.color = color;
-        flagEquipped =false;
+        flagEquipped = false;
         health = 100;
 
     }
@@ -55,19 +56,19 @@ public BulletController bulletController;
         ctx.setFill(this.color);
         ctx.fillRect(x, y, width, height);
         base.draw(ctx, this.color);
-        
+
     }
-    
-	public boolean isColliding(Collidable obj) {
-		
-		if (this.x + speed  < obj.getX() + obj.getwidth() &&
-			this.x + this.width - speed > obj.getX() &&
-			this.y + speed < obj.getY() + obj.getHeight() &&
-			this.y + this.height + speed > obj.getY()) {
-			return true;
-		}
-		
-		return false;
-	}
+
+    public boolean isColliding(Collidable obj) {
+
+        if (this.x + speed < obj.getX() + obj.getwidth() &&
+                this.x + this.width - speed > obj.getX() &&
+                this.y + speed < obj.getY() + obj.getHeight() &&
+                this.y + this.height + speed > obj.getY()) {
+            return true;
+        }
+
+        return false;
+    }
 
 }
