@@ -41,8 +41,7 @@ public class Game {
     boolean sPressed = false;
     boolean dPressed = false;
     boolean ePressed = false;
-    boolean isColliding =  false;
-    
+    int eCount = 0;
     public static void initializeGrid() {
         // Fill edges with 1s
         for (int i = 0; i < ROWS; i++) {
@@ -129,21 +128,24 @@ public class Game {
     
         SPEED = 5;
         
-        // flag movement
-        if((player.x + 5 > flag.x  || player.x < flag.x) && (player.y + 5 > flag.y  || player.y < flag.y)) {
-        	if(ePressed) {
-        		flag.equiped = true;
-        		player.flagEquipped = true;
-        	}
+        int pickupRange = 20;
+
+     // Check if the player is within the pickup range of the flag
+        if (Math.abs(player.x - flag.x) < pickupRange && Math.abs(player.y - flag.y) < pickupRange) {
+            if (ePressed) {
+                if (flag.equiped && player.flagEquipped) {
+                    flag.equiped = false;
+                    player.flagEquipped = false;
+                } else {
+                    flag.equiped = true;
+                    player.flagEquipped = true;
+                }
+            }
         }
-        
-        if(player.flagEquipped && flag.equiped) {
-        	flag.x = player.x;
-        	flag.y = player.y;
-//        	if(ePressed) {
-//        		flag.equiped = false;
-//        		player.flagEquipped = false;
-//        	}
+        // move flag with player
+        if (player.flagEquipped && flag.equiped) {
+            flag.x = player.x + 5;
+            flag.y = player.y + 5;
         }
     
         
