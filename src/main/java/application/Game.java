@@ -91,13 +91,6 @@ public class Game {
 		Random random = new Random();
 		double probability = 0.2;
 
-		int playerBaseX = player.base.x;
-		int playerBaseY = player.base.y;
-		int player2BaseX = player2.base.x;
-		int player2BaseY = player2.base.y;
-		int flagX = flag.x;
-		int flagY = flag.y;
-
 		// randomize map
 		for (int i = 1; i < ROWS - 1; i++) {
 			for (int j = 1; j < COLS - 1; j++) {
@@ -252,10 +245,6 @@ public class Game {
 
 	}
 	
-	private static boolean isNearBase(int cellX, int cellY, int baseX, int baseY) {
-		int distanceThreshold = 10;
-		return Math.abs(cellX - baseX) <= distanceThreshold && Math.abs(cellY - baseY) <= distanceThreshold;
-	}
 
 	
 	private void displayWinnerPopup(String winner) {
