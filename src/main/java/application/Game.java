@@ -141,56 +141,6 @@ public class Game {
 		}
 	}
 
-	private static boolean isNearBase(int cellX, int cellY, int baseX, int baseY) {
-		int distanceThreshold = 10;
-		return Math.abs(cellX - baseX) <= distanceThreshold && Math.abs(cellY - baseY) <= distanceThreshold;
-	}
-
-	private void handleKeyReleased(KeyEvent event) {
-		switch (event.getCode()) {
-		case W:
-			wPressed = false;
-			break;
-		case A:
-			aPressed = false;
-			break;
-		case S:
-			sPressed = false;
-			break;
-		case D:
-			dPressed = false;
-			break;
-		case E:
-			ePressed = false;
-		case SPACE:
-			spacePressed = false;
-		default:
-			break;
-		}
-	}
-
-	private void handleKeyPressed(KeyEvent event) {
-		switch (event.getCode()) {
-		case W:
-			wPressed = true;
-			break;
-		case A:
-			aPressed = true;
-			break;
-		case S:
-			sPressed = true;
-			break;
-		case D:
-			dPressed = true;
-			break;
-		case E:
-			ePressed = true;
-		case SPACE:
-			spacePressed = true;
-		default:
-			break;
-		}
-	}
 
 	private void update() {
 
@@ -255,6 +205,7 @@ public class Game {
 
 		if (Math.abs(player.base.x - flag.x) < dropRange && Math.abs(player.base.y - flag.y) < dropRange
 				&& !flag.equiped && !player.flagEquipped) {
+
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
 
@@ -287,6 +238,26 @@ public class Game {
 
 	}
 
+
+	private void draw() {
+		// Clear canvas
+		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+		player2.draw(ctx, lastPressed);
+		player.draw(ctx, lastPressed);
+		flag.draw(ctx);
+		tiles.forEach(tile -> {
+			tile.draw(ctx);
+		});
+		player.bulletController.draw(ctx);
+
+	}
+	
+	private static boolean isNearBase(int cellX, int cellY, int baseX, int baseY) {
+		int distanceThreshold = 10;
+		return Math.abs(cellX - baseX) <= distanceThreshold && Math.abs(cellY - baseY) <= distanceThreshold;
+	}
+
+	
 	private void displayWinnerPopup(String winner) {
 		Platform.runLater(() -> {
 			Alert alert = new Alert(AlertType.INFORMATION);
@@ -308,17 +279,51 @@ public class Game {
 		return false; // No collision
 	}
 
-	private void draw() {
-		// Clear canvas
-		ctx.clearRect(0, 0, WIDTH, HEIGHT);
-		player2.draw(ctx, lastPressed);
-		player.draw(ctx, lastPressed);
-		flag.draw(ctx);
-		tiles.forEach(tile -> {
-			tile.draw(ctx);
-		});
-		player.bulletController.draw(ctx);
+	
+	private void handleKeyReleased(KeyEvent event) {
+		switch (event.getCode()) {
+		case W:
+			wPressed = false;
+			break;
+		case A:
+			aPressed = false;
+			break;
+		case S:
+			sPressed = false;
+			break;
+		case D:
+			dPressed = false;
+			break;
+		case E:
+			ePressed = false;
+		case SPACE:
+			spacePressed = false;
+		default:
+			break;
+		}
+	}
 
+	private void handleKeyPressed(KeyEvent event) {
+		switch (event.getCode()) {
+		case W:
+			wPressed = true;
+			break;
+		case A:
+			aPressed = true;
+			break;
+		case S:
+			sPressed = true;
+			break;
+		case D:
+			dPressed = true;
+			break;
+		case E:
+			ePressed = true;
+		case SPACE:
+			spacePressed = true;
+		default:
+			break;
+		}
 	}
 
 	public void startGame() {
