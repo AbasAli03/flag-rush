@@ -6,7 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
 
 public class Tile implements Collidable{
-	private Image image;
+	private Image image = new Image("./assets/tile.png");
 	public int x;
 	public int y;
 	public int height;
@@ -22,7 +22,7 @@ public class Tile implements Collidable{
 
 	public void draw(GraphicsContext ctx) {
 		ctx.setFill(Color.CHOCOLATE);
-		ctx.fillRect(x, y, width, height);
+		ctx.drawImage(this.image,x, y, width, height);
 	}
 
 	@Override

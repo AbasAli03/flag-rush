@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 
 public class Flag {
 
-	private Image image;
+	private Image image = new Image("./assets/flag.png");
 	public int x;
 	public int y;
 	private int spawnX;
@@ -28,9 +28,7 @@ public class Flag {
 
 
 	public void draw(GraphicsContext ctx) {
-		
-		   ctx.setFill(Color.PINK);
-	        ctx.fillRect(x, y, width, height);
+			ctx.drawImage(image,x, y, width, height);
 	}
 	
 	

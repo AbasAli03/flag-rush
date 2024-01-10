@@ -22,8 +22,11 @@ public class Main extends Application {
         try {
         	stage = primaryStage;
         	root = new BorderPane();
+            Game.ctx.setFill(Color.BLACK);
+            
+            Game.ctx.fillRect(0, 0, Main.canvas.getWidth(), Main.canvas.getHeight());
         	root.getChildren().add(canvas);
-
+        	
             Scene scene = new Scene(root, 1000, 700);
         	stage.setScene(scene);
         	stage.show();
