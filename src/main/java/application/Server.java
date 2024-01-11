@@ -12,13 +12,11 @@ import org.jspace.RemoteSpace;
 import org.jspace.SequentialSpace;
 import org.jspace.SpaceRepository;
 
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 
-public class Server {
+public class Server implements Runnable{
 
     private static final String PLAYING_SPACE_NAME = "playing";
     private static final String PING_SPACE_NAME = "ping";
@@ -29,13 +27,23 @@ public class Server {
 
     public Server(String ip) throws InterruptedException {
     	this.ip = ip;
-    	if(!Server.activeServers.contains(this.ip)) {
-        	Server.activeServers.add(this.ip);
-    		startServer(this.ip);
-    	} else {
-    		joinServer(this.ip);
-    	}
+
     }
+    
+	@Override
+	public void run() {
+    	try {
+			if(!Server.activeServers.contains(this.ip)) {
+				Server.activeServers.add(this.ip);
+				startServer(this.ip);
+			} else {
+				joinServer(this.ip);
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
     private static SpaceRepository initializeSpaces() {
         SpaceRepository repository = new SpaceRepository();
@@ -117,4 +125,6 @@ public class Server {
             repository.get(SERVER_INFO_SPACE_NAME).put("NewPlayer", newClient);
         }
     }
+
+
 }
