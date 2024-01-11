@@ -11,7 +11,7 @@ public class StartServerController {
     private static TextField ipTextfield;
     
     public void startServer(ActionEvent event) {
-    	String ip = ipTextfield.getText();
+    	String ip = ipTextfield.getText().toString();
     	try {
 			Server server = new Server(ip);
 		} catch (InterruptedException e) {
