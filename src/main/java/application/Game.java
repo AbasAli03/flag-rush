@@ -122,24 +122,27 @@ public class Game implements Runnable {
 	@Override
 	public void run(){
 		String client = "";
-		while (clients.size() < 2) {
+		if (clients.size() < 2) {
 			System.out.println("Waiting for players");
 			try {
-				client = (String) infoSpace.get(new ActualField("new Client"))[0];
+				client = (String) infoSpace.get(new FormalField(String.class))[0];
+				System.out.println(client);
+
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if(client.equals("new Client")) {
+			if(client.equals("needPlayer")) {
 				clients.add("new Client");
-				System.out.println("det virkede");
+				System.out.println("det virkede 2");
 			}
 		}
-		if (clients.size() == 2) {
+		if (clients.size() >= 2) {
 			gameRunning = true;
 
 		}
 		while (gameRunning) {
+			startGame(); 
 			gameLoop.start();
 
 			// Send data 60 times per second

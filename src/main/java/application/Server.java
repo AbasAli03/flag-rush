@@ -14,7 +14,7 @@ import org.jspace.SpaceRepository;
 
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.BorderPane;
 
 public class Server {
 
@@ -85,12 +85,13 @@ public class Server {
     
     }
     private void startGameThreads(SpaceRepository repository, ArrayList<String> clients, String id) throws InterruptedException {
-    	Main.root = new Pane();
-		 Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME), new Canvas(1000,700), clients, id);
-		 Main.root.getChildren().add(game.canvas);
-		 Parent root =  Main.root;
-		 Main.scene.setRoot(root);
-		 Main.stage.show();
+    	Main.root = new BorderPane();
+    	
+		Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME), new Canvas(1000,700), clients, id);
+		Main.root.getChildren().add(game.canvas);
+		Parent root =  Main.root;
+		Main.scene.setRoot(root);
+		Main.stage.show();
 		 
         new Thread(game).start();
         
