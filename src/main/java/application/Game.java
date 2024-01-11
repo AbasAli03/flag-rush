@@ -1,8 +1,11 @@
 package application;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -11,7 +14,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.jspace.ActualField;
 import org.jspace.FormalField;
+import org.jspace.RemoteSpace;
 import org.jspace.Space;
+import org.jspace.SpaceRepository;
 import org.jspace.TemplateField;
 
 import javafx.animation.AnimationTimer;
@@ -71,21 +76,28 @@ public class Game implements Runnable {
 	Space playing, infoSpace;
 	private int connected = 0;
 	private boolean started = false;
-	private ArrayList<String> clients = new ArrayList<>();
+	private int clientsJoined;
 	private String id;
 	Map<String, Player> players;
 	Player otherPlayer;
+	RemoteSpace space3;
 
+	public Game(String ip, Canvas canvas, int clientsJoined, String id)
+			throws InterruptedException, UnknownHostException, IOException {
 
-	public Game(Space playing, Space infoSpace, Canvas canvas, ArrayList<String> clients, String id) throws InterruptedException {
-		this.playing = playing;
-		this.infoSpace = infoSpace;
-		this.clients = clients;
+		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
+		RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.SERVER_INFO_SPACE_NAME + "?keep");
+		 space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
+
+		this.playing = space;
+		this.infoSpace = space2;
+		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
+		this.clientsJoined = clientObjects.size();
 		this.id = id;
 		players = new HashMap<>();
 		infoSpace.put("needPlayer");
 		infoSpace.put("needPlayer");
-		
+
 		this.canvas = canvas;
 		this.ctx = this.canvas.getGraphicsContext2D();
 
@@ -102,13 +114,13 @@ public class Game implements Runnable {
 		player = new Player(40, 40, new Base(40, 40), BOXW, BOXH, Color.BLUE, bluePlayer, bulletController1);
 		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, Color.RED,
 				redPlayer, bulletController2);
-		flag =   new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
-		if(clients.size() == 1) {
+		flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
+		if (clientsJoined == 1) {
 			players.put(id, player);
 			otherPlayer = player2;
 
-		}
-		if(clients.size() == 2) {
+
+		} else if (clientsJoined == 2) {
 			players.put(id, player2);
 			otherPlayer = player;
 
@@ -120,59 +132,62 @@ public class Game implements Runnable {
 	}
 
 	@Override
-	public void run(){
-		String client = "";
-		if (clients.size() < 2) {
+	public void run() {
+		if (clientsJoined < 2) {
 			System.out.println("Waiting for players");
-			try {
-				client = (String) infoSpace.get(new FormalField(String.class))[0];
-				System.out.println(client);
 
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if(client.equals("needPlayer")) {
-				clients.add("new Client");
-				System.out.println("det virkede 2");
-			}
+				try {
+					List<Object[]> clientObjectsUpdated = space3.queryAll(new ActualField("new Client"));
+					this.clientsJoined = clientObjectsUpdated.size();
+					System.out.println("after query " + clientsJoined);
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			
+
 		}
-		if (clients.size() >= 2) {
+		if (clientsJoined >= 2) {
 			gameRunning = true;
 
 		}
 		while (gameRunning) {
-			startGame(); 
+			startGame();
 			gameLoop.start();
 
 			// Send data 60 times per second
-			
-			ScheduledExecutorService dataSenderScheduler =
-			 Executors.newScheduledThreadPool(1);
-			 dataSenderScheduler.scheduleAtFixedRate(() -> {
-			
-				 
-					try {
-						playing.put(players.get(id));
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				
-			 }, 0, 16, TimeUnit.MILLISECONDS);
-			 
-			  // Recieve data 60 times per second
-			  ScheduledExecutorService dataReceiverScheduler =
-			  Executors.newScheduledThreadPool(1);
-			  dataReceiverScheduler.scheduleAtFixedRate(() -> {
-					try {
-						otherPlayer = (Player) playing.get(new FormalField(Player.class))[0];
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-			  }, 0, 16, TimeUnit.MILLISECONDS);
-			 
+
+			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
+			dataSenderScheduler.scheduleAtFixedRate(() -> {
+
+				try {
+					//System.out.println("before put");
+					playing.put(players.get(id));
+					//System.out.println("after put");
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}, 0, 16, TimeUnit.MILLISECONDS);
+
+			// Recieve data 60 times per second
+			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1);
+			dataReceiverScheduler.scheduleAtFixedRate(() -> {
+				try {
+					//System.out.println("before recieve");
+
+					otherPlayer = (Player) playing.get(new FormalField(Player.class))[0];
+					//System.out.println("after recieve");
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}, 0, 16, TimeUnit.MILLISECONDS);
+
 		}
 
 	}
@@ -293,7 +308,8 @@ public class Game implements Runnable {
 		}
 		int dropRange = 50;
 
-		if (Math.abs(players.get(id).base.x - flag.x) < dropRange && Math.abs(players.get(id).base.y - flag.y) < dropRange
+		if (Math.abs(players.get(id).base.x - flag.x) < dropRange
+				&& Math.abs(players.get(id).base.y - flag.y) < dropRange
 				&& !flag.equiped && !players.get(id).flagEquipped) {
 
 			gameLoop.stop();
@@ -437,11 +453,7 @@ public class Game implements Runnable {
 	}
 
 	public void addPlayer(String name) throws InterruptedException {
-		if (clients.contains(name)) {
-			infoSpace.put("needPlayer");
-			return;
-		}
-		clients.add(name);
+
 		connected++;
 		if (connected == 2) {
 			infoSpace.put("gotPlayers");

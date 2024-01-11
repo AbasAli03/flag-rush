@@ -1,5 +1,8 @@
 package controllers;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
+
 import application.Server;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,10 +18,18 @@ public class StartServerController {
     	System.out.println(ip);
     	try {
 			Server server = new Server(ip);
+			server.startServer(ip);
+
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}    	
+		} catch (UnknownHostException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }    	
     	
     }
 
