@@ -5,13 +5,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
+import org.jspace.ActualField;
+import org.jspace.FormalField;
+import org.jspace.Space;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -20,36 +20,40 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
 public class Game implements Runnable {
-
-	public  final int HEIGHT = 700;
-	public  final int WIDTH = 1000;
-	public  int SPEED = 5;
-	public  final int BOXW = 20;
-	public  final int BOXH = 20;
-	public  final int ROWS = WIDTH / BOXW;
-	public  final int COLS = HEIGHT / BOXH;
-	public int[][] grid = new int[ROWS][COLS];
-	 ArrayList<Tile> tiles = new ArrayList<Tile>();
+	
+	Space playing, infoSpace;
+	private int connected = 0;
+	private boolean started = false;
+	private ArrayList<String> clients = new ArrayList<>();
+	
+	public static final int HEIGHT = 700;
+	public static final int WIDTH = 1000;
+	public static int SPEED = 5;
+	public static final int BOXW = 20;
+	public static final int BOXH = 20;
+	public static final int ROWS = WIDTH / BOXW;
+	public static final int COLS = HEIGHT / BOXH;
+	public static int[][] grid = new int[ROWS][COLS];
+	static ArrayList<Tile> tiles = new ArrayList<Tile>();
 
 	// Game Loop
-	private final long NANO_PER_SECOND = 1_000_000_000L;
-	private final double TARGET_UPS = 60.0;
-	private final double TIME_PER_UPDATE = 1.0 / TARGET_UPS;
+	private static final long NANO_PER_SECOND = 1_000_000_000L;
+	private static final double TARGET_UPS = 60.0;
+	private static final double TIME_PER_UPDATE = 1.0 / TARGET_UPS;
 	long lastUpdateTime;
 	AnimationTimer gameLoop;
 
 	// game
-	public Canvas canvas;
-	GraphicsContext ctx;
+	static GraphicsContext ctx = Main.canvas.getGraphicsContext2D();
 	BulletController bulletController1 = new BulletController();
 	BulletController bulletController2 = new BulletController();
 
 	Map<String, Image> bluePlayer = new HashMap<String, Image>();
 	Map<String, Image> redPlayer = new HashMap<String, Image>();
 
-	Player player;
-	Player player2;
-	Flag flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
+	static Player player;
+	static Player player2;
+	static Flag flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
 	String winningPlayer = "";
 
 	// controls
@@ -61,15 +65,19 @@ public class Game implements Runnable {
 	boolean winner = false;
 	boolean spacePressed = false;
 	String lastPressed = "";
-	boolean gameRunning = false;
 	
+	//Game constructor
+    public Game(Space playing, Space infoSpace) throws InterruptedException {
+        this.playing = playing;
+        this.infoSpace = infoSpace;
+        infoSpace.put("needPlayer");
+        infoSpace.put("needPlayer");
+    }
 
-	public Game() {
-		this.canvas = new Canvas(WIDTH,HEIGHT);
-		this.ctx = this.canvas.getGraphicsContext2D();
-		this.ctx.setFill(Color.BLACK);
+	public Game(){
+		ctx.setFill(Color.BLACK);
 
-		this.ctx.fillRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
+		ctx.fillRect(0, 0, Main.canvas.getWidth(), Main.canvas.getHeight());
 
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
@@ -88,33 +96,7 @@ public class Game implements Runnable {
 
 	}
 
-	@Override
-	public void run() {
-		canvas.setOnKeyReleased(this::handleKeyReleased);
-		canvas.setOnKeyPressed(this::handleKeyPressed);
-		gameRunning = true;
-		
-		while(gameRunning) {
-			
-			startGame();
-			gameLoop.start();
-			
-//			// Send data 60 times per second
-//			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
-//			dataSenderScheduler.scheduleAtFixedRate(() -> {
-//				System.out.println("hello");
-//			}, 0, 16, TimeUnit.MILLISECONDS);
-//
-//			// Recieve data 60 times per second
-//			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1); 
-//			dataReceiverScheduler.scheduleAtFixedRate(() -> {
-//				
-//			}, 0, 16, TimeUnit.MILLISECONDS);
-		}
-	}
-
-
-	public  void initializeGrid() {
+	public static void initializeGrid() {
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
 				if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
@@ -180,7 +162,6 @@ public class Game implements Runnable {
 		if (wPressed) {
 			lastPressed = "W";
 			deltaY = -SPEED;
-			System.out.println("www");
 		} else if (aPressed) {
 			lastPressed = "A";
 			deltaX = -SPEED;
@@ -352,7 +333,8 @@ public class Game implements Runnable {
 	}
 
 	public void startGame() {
-
+		Main.canvas.setOnKeyReleased(this::handleKeyReleased);
+		Main.canvas.setOnKeyPressed(this::handleKeyPressed);
 
 		lastUpdateTime = System.nanoTime();
 
@@ -376,7 +358,46 @@ public class Game implements Runnable {
 			}
 		};
 
+		gameLoop.start();
 
 	}
+	
+	public void run() {
+		try {
+            gameLoop: while (true) {
+                System.out.println("Gameloop start");
+                started = false;
+                if (connected < 2) {
+                    System.out.println("Waiting for players");
+                    infoSpace.get(new ActualField("gotPlayers"));
+                }
+                started = true;
+
+                System.out.println("New game started: " + player + " vs " + player2);
+
+                //Display winner
+                displayWinnerPopup(winningPlayer);}
+            
+           }catch (InterruptedException e) {}
+    
+	}
+	
+	public void addPlayer(String name) throws InterruptedException {
+        if (clients.contains(name)) {
+            infoSpace.put("needPlayer");
+            return;
+        }
+        clients.add(name);
+        connected++;
+        if (connected == 2) {
+            infoSpace.put("gotPlayers");
+        }
+    }
+	
+	public int connectedPlayers() {
+        return connected;
+    }
 
 }
+	
+	
