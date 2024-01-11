@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.jspace.ActualField;
+import org.jspace.FormalField;
 import org.jspace.Space;
 
 import javafx.animation.AnimationTimer;
@@ -70,13 +71,20 @@ public class Game implements Runnable {
 	private int connected = 0;
 	private boolean started = false;
 	private ArrayList<String> clients = new ArrayList<>();
+	private String id;
+	Map<String, Player> players;
+	Player otherPlayer;
 
-	public Game(Space playing, Space infoSpace, Canvas canvas) throws InterruptedException {
+
+	public Game(Space playing, Space infoSpace, Canvas canvas, ArrayList<String> clients, String id) throws InterruptedException {
 		this.playing = playing;
 		this.infoSpace = infoSpace;
+		this.clients = clients;
+		this.id = id;
+		players = new HashMap<>();
 		infoSpace.put("needPlayer");
 		infoSpace.put("needPlayer");
-	
+		
 		this.canvas = canvas;
 		this.ctx = this.canvas.getGraphicsContext2D();
 
@@ -94,42 +102,62 @@ public class Game implements Runnable {
 		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, Color.RED,
 				redPlayer, bulletController2);
 		flag =   new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
+		if(clients.size() == 1) {
+			players.put(id, player);
+			otherPlayer = player2;
+
+		}
+		if(clients.size() == 2) {
+			players.put(id, player2);
+			otherPlayer = player;
+
+
+		}
+
 		initializeGrid();
 
 	}
 
 	@Override
-	public void run() {
-		try {
-			if (connected < 2) {
-				System.out.println("Waiting for players");
-				infoSpace.get(new ActualField("gotPlayers"));
-			}
-			if (connected == 2) {
-				gameRunning = true;
+	public void run(){
+		if (clients.size() < 2) {
+			System.out.println("Waiting for players");
+		}
+		if (clients.size() == 2) {
+			gameRunning = true;
 
-			}
-			while (gameRunning) {
-				gameLoop.start();
+		}
+		while (gameRunning) {
+			gameLoop.start();
 
-				// Send data 60 times per second
-				/*
-				 * ScheduledExecutorService dataSenderScheduler =
-				 * Executors.newScheduledThreadPool(1);
-				 * dataSenderScheduler.scheduleAtFixedRate(() -> {
-				 * System.out.println("hello");
-				 * }, 0, 16, TimeUnit.MILLISECONDS);
-				 * 
-				 * // Recieve data 60 times per second
-				 * ScheduledExecutorService dataReceiverScheduler =
-				 * Executors.newScheduledThreadPool(1);
-				 * dataReceiverScheduler.scheduleAtFixedRate(() -> {
-				 * 
-				 * }, 0, 16, TimeUnit.MILLISECONDS);
-				 */
-			}
-		} catch (InterruptedException e) {
-			// TODO: handle exception
+			// Send data 60 times per second
+			
+			ScheduledExecutorService dataSenderScheduler =
+			 Executors.newScheduledThreadPool(1);
+			 dataSenderScheduler.scheduleAtFixedRate(() -> {
+			
+				 
+					try {
+						playing.put(players.get(id));
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				
+			 }, 0, 16, TimeUnit.MILLISECONDS);
+			 
+			  // Recieve data 60 times per second
+			  ScheduledExecutorService dataReceiverScheduler =
+			  Executors.newScheduledThreadPool(1);
+			  dataReceiverScheduler.scheduleAtFixedRate(() -> {
+					try {
+						otherPlayer = (Player) playing.get(new FormalField(Player.class))[0];
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			  }, 0, 16, TimeUnit.MILLISECONDS);
+			 
 		}
 
 	}
@@ -212,74 +240,74 @@ public class Game implements Runnable {
 			int speed = 5;
 			int delay = 7;
 
-			int bulletX = player.x + player.width / 2;
-			int bulletY = player.y;
+			int bulletX = players.get(id).x + player.width / 2;
+			int bulletY = players.get(id).y;
 			if (lastPressed.equals("A") || lastPressed.equals("D")) {
-				bulletY = player.y + player.height / 2;
+				bulletY = players.get(id).y + players.get(id).height / 2;
 			}
-			player.bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
+			players.get(id).bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
 
 		}
 
-		if (!isCollidingWithTiles(player.x + deltaX, player.y + deltaY)) {
-			player.x += deltaX;
-			player.y += deltaY;
+		if (!isCollidingWithTiles(players.get(id).x + deltaX, players.get(id).y + deltaY)) {
+			players.get(id).x += deltaX;
+			players.get(id).y += deltaY;
 		}
 
 		SPEED = 5;
 
 		int pickupRange = 20;
 
-		// Check if the player is within the pickup range of the flag
-		if (Math.abs(player.x - flag.x) < pickupRange && Math.abs(player.y - flag.y) < pickupRange) {
+		// Check if the player.get(id) is within the pickup range of the flag
+		if (Math.abs(players.get(id).x - flag.x) < pickupRange && Math.abs(players.get(id).y - flag.y) < pickupRange) {
 			if (ePressed) {
-				if (flag.equiped && player.flagEquipped) {
+				if (flag.equiped && players.get(id).flagEquipped) {
 					flag.equiped = false;
-					player.flagEquipped = false;
+					players.get(id).flagEquipped = false;
 				} else {
 					flag.equiped = true;
-					player.flagEquipped = true;
+					players.get(id).flagEquipped = true;
 				}
 			}
 		}
-		// move flag with player
-		if (player.flagEquipped && flag.equiped) {
-			flag.x = player.x + 5;
-			flag.y = player.y + 5;
+		// move flag with player.get(id)
+		if (players.get(id).flagEquipped && flag.equiped) {
+			flag.x = players.get(id).x + 5;
+			flag.y = players.get(id).y + 5;
 
 		}
 		int dropRange = 50;
 
-		if (Math.abs(player.base.x - flag.x) < dropRange && Math.abs(player.base.y - flag.y) < dropRange
-				&& !flag.equiped && !player.flagEquipped) {
+		if (Math.abs(players.get(id).base.x - flag.x) < dropRange && Math.abs(players.get(id).base.y - flag.y) < dropRange
+				&& !flag.equiped && !players.get(id).flagEquipped) {
 
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
 
 		}
 
-		if (player.health == 0) {
+		if (players.get(id).health == 0) {
 			winningPlayer = "Red";
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
 		}
-		if (player2.health == 0) {
+		if (otherPlayer.health == 0) {
 			winningPlayer = "Blue";
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
 		}
 
 		// removing bullets that collide with enemy
-		Iterator<Bullet> iterator = player.bulletController.bullets.iterator();
+		Iterator<Bullet> iterator = players.get(id).bulletController.bullets.iterator();
 		while (iterator.hasNext()) {
 			Bullet bullet = iterator.next();
-			if (bullet.isColliding(player2)) {
+			if (bullet.isColliding(otherPlayer)) {
 				iterator.remove();
 			}
 		}
 		// checking for collisions
 		for (Tile tile : tiles) {
-			player.bulletController.isColliding(tile);
+			players.get(id).bulletController.isColliding(tile);
 
 		}
 
@@ -288,13 +316,13 @@ public class Game implements Runnable {
 	private void draw() {
 		// Clear canvas
 		ctx.clearRect(0, 0, WIDTH, HEIGHT);
-		player2.draw(ctx, lastPressed);
-		player.draw(ctx, lastPressed);
+		otherPlayer.draw(ctx, lastPressed);
+		players.get(id).draw(ctx, lastPressed);
 		flag.draw(ctx);
 		tiles.forEach(tile -> {
 			tile.draw(ctx);
 		});
-		player.bulletController.draw(ctx);
+		players.get(id).bulletController.draw(ctx);
 
 	}
 
@@ -311,8 +339,8 @@ public class Game implements Runnable {
 
 	private boolean isCollidingWithTiles(int newX, int newY) {
 		for (Tile tile : tiles) {
-			if (newX < tile.getX() + tile.getwidth() && newX + player.getwidth() > tile.getX()
-					&& newY < tile.getY() + tile.getHeight() && newY + player.getHeight() > tile.getY()) {
+			if (newX < tile.getX() + tile.getwidth() && newX + players.get(id).getwidth() > tile.getX()
+					&& newY < tile.getY() + tile.getHeight() && newY + players.get(id).getHeight() > tile.getY()) {
 				return true; // Collision detected
 			}
 		}

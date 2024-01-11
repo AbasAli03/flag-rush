@@ -1,29 +1,40 @@
 package application;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.UUID;
 
 import org.jspace.ActualField;
 import org.jspace.FormalField;
+import org.jspace.RemoteSpace;
 import org.jspace.SequentialSpace;
 import org.jspace.SpaceRepository;
 
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 
 public class Server {
 
     private static final String PLAYING_SPACE_NAME = "playing";
     private static final String PING_SPACE_NAME = "ping";
     private static final String SERVER_INFO_SPACE_NAME = "serverInfo";
+    static ArrayList<String> clients = new ArrayList<>();
+    private String ip;
+    static ArrayList<String> activeServers = new ArrayList<>();
 
-    public static void main(String[] args) {
-        try {
-            SpaceRepository repository = initializeSpaces();
-            startServer(repository);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    public Server(String ip) throws InterruptedException {
+    	this.ip = ip;
+    	if(!Server.activeServers.contains(this.ip)) {
+        	Server.activeServers.add(this.ip);
+    		startServer(this.ip);
+    	} else {
+    		joinServer(this.ip);
+    	}
     }
 
     private static SpaceRepository initializeSpaces() {
@@ -34,36 +45,67 @@ public class Server {
         return repository;
     }
 
-    private static void startServer(SpaceRepository repository) throws InterruptedException {
-        Scanner input = new Scanner(System.in);
-        System.out.print("Please enter the room's IP address (or localhost to play locally): ");
-        String ip = input.nextLine();
+    private void startServer(String ip) throws InterruptedException {
+    	SpaceRepository repository = initializeSpaces();
         repository.addGate("tcp://" + ip + ":9001/?keep");
         System.out.println("Server is up...");
 
-        List<String> clients = new ArrayList<>();
-
-        startGameThreads(repository, clients);
+        UUID id = UUID.randomUUID();
+        clients.add(id.toString());
+        startGameThreads(repository, clients, id.toString());
 
         while (true) {
             handleServerInfo(repository, clients);
         }
     }
+    
+    private void joinServer(String ip) throws InterruptedException {
+    	 
+    	try {
+    	    UUID id = UUID.randomUUID();
+    	    clients.add(id.toString());
+			RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/"+ PLAYING_SPACE_NAME+"?keep");
+			RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/"+ SERVER_INFO_SPACE_NAME+"?keep");
+			SpaceRepository repository = new SpaceRepository();
+			repository.add(PLAYING_SPACE_NAME,space);
+			repository.add(SERVER_INFO_SPACE_NAME,space2);
 
-    private static void startGameThreads(SpaceRepository repository, List<String> clients) throws InterruptedException {
-        Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME), new Canvas(1000,700));
+			
+			startGameThreads(repository, clients, id.toString());
+			
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+ 
+        
+    
+    }
+    private void startGameThreads(SpaceRepository repository, ArrayList<String> clients, String id) throws InterruptedException {
+    	Main.root = new Pane();
+		 Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME), new Canvas(1000,700), clients, id);
+		 Main.root.getChildren().add(game.canvas);
+		 Parent root =  Main.root;
+		 Main.scene.setRoot(root);
+		 Main.stage.show();
+		 
         new Thread(game).start();
         
         Mover mover = new Mover(repository.get(SERVER_INFO_SPACE_NAME), game);
         new Thread(mover).start();
     }
 
-    private static void handleServerInfo(SpaceRepository repository, List<String> clients) throws InterruptedException {
+    private void handleServerInfo(SpaceRepository repository, List<String> clients) throws InterruptedException {
         // Handle server information updates from clients
         handlePlayerConnection(repository, clients);
     }
+    
 
-    private static void handlePlayerConnection(SpaceRepository repository, List<String> clients) throws InterruptedException {
+    private void handlePlayerConnection(SpaceRepository repository, List<String> clients) throws InterruptedException {
         // Listen for player connection requests
         Object[] connectionRequest = repository.get(SERVER_INFO_SPACE_NAME).get(new ActualField("Connect"), new FormalField(String.class));
 

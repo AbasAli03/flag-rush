@@ -1,19 +1,16 @@
 package application;
 
-import org.jspace.Space;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
     public Canvas canvas = new Canvas(1000,700);
-    public static BorderPane root;
+    public static Pane root;
     public static Scene scene;
     public static Stage stage;
 
@@ -24,11 +21,12 @@ public class Main extends Application {
         	root = new BorderPane();
             
         	root.getChildren().add(canvas);
-        	
-            Scene scene = new Scene(root, 1000, 700);
+          	stage = primaryStage;
+        	root = FXMLLoader.load(getClass().getResource("Home.fxml"));
+        	scene = new Scene(root);
         	stage.setScene(scene);
         	stage.show();
-            canvas.setFocusTraversable(true);
+
      
 
             
