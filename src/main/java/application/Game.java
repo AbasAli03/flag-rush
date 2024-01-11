@@ -5,9 +5,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -15,7 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
-public class Game {
+public class Game implements Runnable {
 
 	public static final int HEIGHT = 700;
 	public static final int WIDTH = 1000;
@@ -35,16 +39,17 @@ public class Game {
 	AnimationTimer gameLoop;
 
 	// game
-	static GraphicsContext ctx = Main.canvas.getGraphicsContext2D();
+	Canvas canvas;
+	GraphicsContext ctx;
 	BulletController bulletController1 = new BulletController();
 	BulletController bulletController2 = new BulletController();
 
 	Map<String, Image> bluePlayer = new HashMap<String, Image>();
 	Map<String, Image> redPlayer = new HashMap<String, Image>();
 
-	static Player player;
-	static Player player2;
-	static Flag flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
+	Player player;
+	Player player2;
+	Flag flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
 	String winningPlayer = "";
 
 	// controls
@@ -56,11 +61,15 @@ public class Game {
 	boolean winner = false;
 	boolean spacePressed = false;
 	String lastPressed = "";
+	boolean gameRunning = false;
+	
 
-	public Game() {
+	public Game(Canvas canvas) {
+		this.canvas = canvas;
+		ctx = this.canvas.getGraphicsContext2D();
 		ctx.setFill(Color.BLACK);
 
-		ctx.fillRect(0, 0, Main.canvas.getWidth(), Main.canvas.getHeight());
+		ctx.fillRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
 
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
@@ -78,6 +87,29 @@ public class Game {
 		initializeGrid();
 
 	}
+
+	@Override
+	public void run() {
+		
+		gameRunning = true;
+		
+		while(gameRunning) {
+			gameLoop.start();
+			
+			// Send data 60 times per second
+			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
+			dataSenderScheduler.scheduleAtFixedRate(() -> {
+				System.out.println("hello");
+			}, 0, 16, TimeUnit.MILLISECONDS);
+
+			// Recieve data 60 times per second
+			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1); 
+			dataReceiverScheduler.scheduleAtFixedRate(() -> {
+
+			}, 0, 16, TimeUnit.MILLISECONDS);
+		}
+	}
+
 
 	public static void initializeGrid() {
 		for (int i = 0; i < ROWS; i++) {
@@ -316,8 +348,8 @@ public class Game {
 	}
 
 	public void startGame() {
-		Main.canvas.setOnKeyReleased(this::handleKeyReleased);
-		Main.canvas.setOnKeyPressed(this::handleKeyPressed);
+		canvas.setOnKeyReleased(this::handleKeyReleased);
+		canvas.setOnKeyPressed(this::handleKeyPressed);
 
 		lastUpdateTime = System.nanoTime();
 
@@ -341,7 +373,7 @@ public class Game {
 			}
 		};
 
-		gameLoop.start();
 
 	}
+
 }

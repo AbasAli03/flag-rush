@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    public static Canvas canvas = new Canvas(1000,700);
+    public Canvas canvas = new Canvas(1000,700);
     public static BorderPane root;
     public static Scene scene;
     public static Stage stage;
@@ -22,18 +22,17 @@ public class Main extends Application {
         try {
         	stage = primaryStage;
         	root = new BorderPane();
-            Game.ctx.setFill(Color.BLACK);
             
-            Game.ctx.fillRect(0, 0, Main.canvas.getWidth(), Main.canvas.getHeight());
         	root.getChildren().add(canvas);
         	
             Scene scene = new Scene(root, 1000, 700);
         	stage.setScene(scene);
         	stage.show();
             canvas.setFocusTraversable(true);
-            Game game = new Game();
-            
+            Game game = new Game(canvas);
             game.startGame();
+            new Thread(game).start();
+
             
            
         } catch (Exception e) {
