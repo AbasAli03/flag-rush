@@ -14,6 +14,7 @@ public class Player implements Collidable {
     private Color color;
     public boolean flagEquipped;
     public int health;
+    public int speed = Game.SPEED;
     public Base base;
     public BulletController bulletController;
     public Map<String,Image> images;
@@ -61,10 +62,10 @@ public class Player implements Collidable {
 
     public boolean isColliding(Collidable obj) {
 
-        if (this.x  < obj.getX() + obj.getwidth() &&
-                this.x + this.width > obj.getX() &&
-                this.y  < obj.getY() + obj.getHeight() &&
-                this.y + this.height > obj.getY()) {
+        if (this.x + speed < obj.getX() + obj.getwidth() &&
+                this.x + this.width - speed > obj.getX() &&
+                this.y + speed < obj.getY() + obj.getHeight() &&
+                this.y + this.height + speed > obj.getY()) {
             return true;
         }
 

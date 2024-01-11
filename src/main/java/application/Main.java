@@ -12,6 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class Main extends Application {
+    public Canvas canvas = new Canvas(1000,700);
     public static BorderPane root;
     public static Scene scene;
     public static Stage stage;
@@ -22,16 +23,15 @@ public class Main extends Application {
         	stage = primaryStage;
         	root = new BorderPane();
             
+        	root.getChildren().add(canvas);
         	
             Scene scene = new Scene(root, 1000, 700);
         	stage.setScene(scene);
         	stage.show();
-            Game game = new Game();
-        	root.getChildren().add(game.canvas);
-
+            canvas.setFocusTraversable(true);
+            Game game = new Game(canvas);
+            game.startGame();
             new Thread(game).start();
-            
-
 
             
            

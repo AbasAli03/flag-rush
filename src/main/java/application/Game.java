@@ -21,25 +21,25 @@ import javafx.scene.paint.Color;
 
 public class Game implements Runnable {
 
-	public  final int HEIGHT = 700;
-	public  final int WIDTH = 1000;
-	public  int SPEED = 5;
-	public  final int BOXW = 20;
-	public  final int BOXH = 20;
-	public  final int ROWS = WIDTH / BOXW;
-	public  final int COLS = HEIGHT / BOXH;
-	public int[][] grid = new int[ROWS][COLS];
-	 ArrayList<Tile> tiles = new ArrayList<Tile>();
+	public static final int HEIGHT = 700;
+	public static final int WIDTH = 1000;
+	public static int SPEED = 5;
+	public static final int BOXW = 20;
+	public static final int BOXH = 20;
+	public static final int ROWS = WIDTH / BOXW;
+	public static final int COLS = HEIGHT / BOXH;
+	public static int[][] grid = new int[ROWS][COLS];
+	static ArrayList<Tile> tiles = new ArrayList<Tile>();
 
 	// Game Loop
-	private final long NANO_PER_SECOND = 1_000_000_000L;
-	private final double TARGET_UPS = 60.0;
-	private final double TIME_PER_UPDATE = 1.0 / TARGET_UPS;
+	private static final long NANO_PER_SECOND = 1_000_000_000L;
+	private static final double TARGET_UPS = 60.0;
+	private static final double TIME_PER_UPDATE = 1.0 / TARGET_UPS;
 	long lastUpdateTime;
 	AnimationTimer gameLoop;
 
 	// game
-	public Canvas canvas;
+	Canvas canvas;
 	GraphicsContext ctx;
 	BulletController bulletController1 = new BulletController();
 	BulletController bulletController2 = new BulletController();
@@ -64,12 +64,12 @@ public class Game implements Runnable {
 	boolean gameRunning = false;
 	
 
-	public Game() {
-		this.canvas = new Canvas(WIDTH,HEIGHT);
-		this.ctx = this.canvas.getGraphicsContext2D();
-		this.ctx.setFill(Color.BLACK);
+	public Game(Canvas canvas) {
+		this.canvas = canvas;
+		ctx = this.canvas.getGraphicsContext2D();
+		ctx.setFill(Color.BLACK);
 
-		this.ctx.fillRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
+		ctx.fillRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
 
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
@@ -90,31 +90,30 @@ public class Game implements Runnable {
 
 	@Override
 	public void run() {
-		canvas.setOnKeyReleased(this::handleKeyReleased);
-		canvas.setOnKeyPressed(this::handleKeyPressed);
+		
 		gameRunning = true;
 		
 		while(gameRunning) {
-			
-			startGame();
 			gameLoop.start();
 			
-//			// Send data 60 times per second
-//			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
-//			dataSenderScheduler.scheduleAtFixedRate(() -> {
-//				System.out.println("hello");
-//			}, 0, 16, TimeUnit.MILLISECONDS);
-//
-//			// Recieve data 60 times per second
-//			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1); 
-//			dataReceiverScheduler.scheduleAtFixedRate(() -> {
-//				
-//			}, 0, 16, TimeUnit.MILLISECONDS);
+			// Send data 60 times per second
+			/*
+			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
+			dataSenderScheduler.scheduleAtFixedRate(() -> {
+				System.out.println("hello");
+			}, 0, 16, TimeUnit.MILLISECONDS);
+
+			// Recieve data 60 times per second
+			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1); 
+			dataReceiverScheduler.scheduleAtFixedRate(() -> {
+
+			}, 0, 16, TimeUnit.MILLISECONDS);
+			 */
 		}
 	}
 
 
-	public  void initializeGrid() {
+	public static void initializeGrid() {
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
 				if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
@@ -180,7 +179,6 @@ public class Game implements Runnable {
 		if (wPressed) {
 			lastPressed = "W";
 			deltaY = -SPEED;
-			System.out.println("www");
 		} else if (aPressed) {
 			lastPressed = "A";
 			deltaX = -SPEED;
@@ -352,7 +350,8 @@ public class Game implements Runnable {
 	}
 
 	public void startGame() {
-
+		canvas.setOnKeyReleased(this::handleKeyReleased);
+		canvas.setOnKeyPressed(this::handleKeyPressed);
 
 		lastUpdateTime = System.nanoTime();
 
