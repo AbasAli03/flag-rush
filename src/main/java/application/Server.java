@@ -64,6 +64,7 @@ public class Server {
     	    clients.add(id.toString());
 			RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/"+ PLAYING_SPACE_NAME+"?keep");
 			RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/"+ SERVER_INFO_SPACE_NAME+"?keep");
+			space2.put("new Client");
 			SpaceRepository repository = new SpaceRepository();
 			repository.add(PLAYING_SPACE_NAME,space);
 			repository.add(SERVER_INFO_SPACE_NAME,space2);

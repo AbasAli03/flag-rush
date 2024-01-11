@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 import org.jspace.Space;
+import org.jspace.TemplateField;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -120,8 +121,19 @@ public class Game implements Runnable {
 
 	@Override
 	public void run(){
-		if (clients.size() < 2) {
+		String client = "";
+		while (clients.size() < 2) {
 			System.out.println("Waiting for players");
+			try {
+				client = (String) infoSpace.get(new ActualField("new Client"))[0];
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(client.equals("new Client")) {
+				clients.add("new Client");
+				System.out.println("det virkede");
+			}
 		}
 		if (clients.size() == 2) {
 			gameRunning = true;
