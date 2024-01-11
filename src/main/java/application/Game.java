@@ -52,7 +52,7 @@ public class Game implements Runnable {
 
 	Player player;
 	Player player2;
-	Flag flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
+	Flag flag;
 	String winningPlayer = "";
 
 	// controls
@@ -76,9 +76,9 @@ public class Game implements Runnable {
 		this.infoSpace = infoSpace;
 		infoSpace.put("needPlayer");
 		infoSpace.put("needPlayer");
-		ctx.setFill(Color.BLACK);
-
-		ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+	
+		this.canvas = canvas;
+		this.ctx = this.canvas.getGraphicsContext2D();
 
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
@@ -93,6 +93,7 @@ public class Game implements Runnable {
 		player = new Player(40, 40, new Base(40, 40), BOXW, BOXH, Color.BLUE, bluePlayer, bulletController1);
 		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, Color.RED,
 				redPlayer, bulletController2);
+		flag =   new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
 		initializeGrid();
 
 	}
