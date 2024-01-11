@@ -9,6 +9,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.jspace.ActualField;
+import org.jspace.Space;
+
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
@@ -62,14 +65,20 @@ public class Game implements Runnable {
 	boolean spacePressed = false;
 	String lastPressed = "";
 	boolean gameRunning = false;
-	
 
-	public Game(Canvas canvas) {
-		this.canvas = canvas;
-		ctx = this.canvas.getGraphicsContext2D();
+	Space playing, infoSpace;
+	private int connected = 0;
+	private boolean started = false;
+	private ArrayList<String> clients = new ArrayList<>();
+
+	public Game(Space playing, Space infoSpace, Canvas canvas) throws InterruptedException {
+		this.playing = playing;
+		this.infoSpace = infoSpace;
+		infoSpace.put("needPlayer");
+		infoSpace.put("needPlayer");
 		ctx.setFill(Color.BLACK);
 
-		ctx.fillRect(0, 0, this.canvas.getWidth(), this.canvas.getHeight());
+		ctx.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
@@ -90,28 +99,39 @@ public class Game implements Runnable {
 
 	@Override
 	public void run() {
-		
-		gameRunning = true;
-		
-		while(gameRunning) {
-			gameLoop.start();
-			
-			// Send data 60 times per second
-			/*
-			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
-			dataSenderScheduler.scheduleAtFixedRate(() -> {
-				System.out.println("hello");
-			}, 0, 16, TimeUnit.MILLISECONDS);
+		try {
+			if (connected < 2) {
+				System.out.println("Waiting for players");
+				infoSpace.get(new ActualField("gotPlayers"));
+			}
+			if (connected == 2) {
+				gameRunning = true;
 
-			// Recieve data 60 times per second
-			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1); 
-			dataReceiverScheduler.scheduleAtFixedRate(() -> {
+			}
+			while (gameRunning) {
+				gameLoop.start();
 
-			}, 0, 16, TimeUnit.MILLISECONDS);
-			 */
+				// Send data 60 times per second
+				/*
+				 * ScheduledExecutorService dataSenderScheduler =
+				 * Executors.newScheduledThreadPool(1);
+				 * dataSenderScheduler.scheduleAtFixedRate(() -> {
+				 * System.out.println("hello");
+				 * }, 0, 16, TimeUnit.MILLISECONDS);
+				 * 
+				 * // Recieve data 60 times per second
+				 * ScheduledExecutorService dataReceiverScheduler =
+				 * Executors.newScheduledThreadPool(1);
+				 * dataReceiverScheduler.scheduleAtFixedRate(() -> {
+				 * 
+				 * }, 0, 16, TimeUnit.MILLISECONDS);
+				 */
+			}
+		} catch (InterruptedException e) {
+			// TODO: handle exception
 		}
-	}
 
+	}
 
 	public static void initializeGrid() {
 		for (int i = 0; i < ROWS; i++) {
@@ -167,7 +187,6 @@ public class Game implements Runnable {
 			}
 		}
 	}
-
 
 	private void update() {
 
@@ -265,7 +284,6 @@ public class Game implements Runnable {
 
 	}
 
-
 	private void draw() {
 		// Clear canvas
 		ctx.clearRect(0, 0, WIDTH, HEIGHT);
@@ -278,9 +296,7 @@ public class Game implements Runnable {
 		player.bulletController.draw(ctx);
 
 	}
-	
 
-	
 	private void displayWinnerPopup(String winner) {
 		Platform.runLater(() -> {
 			Alert alert = new Alert(AlertType.INFORMATION);
@@ -302,50 +318,49 @@ public class Game implements Runnable {
 		return false; // No collision
 	}
 
-	
 	private void handleKeyReleased(KeyEvent event) {
 		switch (event.getCode()) {
-		case W:
-			wPressed = false;
-			break;
-		case A:
-			aPressed = false;
-			break;
-		case S:
-			sPressed = false;
-			break;
-		case D:
-			dPressed = false;
-			break;
-		case E:
-			ePressed = false;
-		case SPACE:
-			spacePressed = false;
-		default:
-			break;
+			case W:
+				wPressed = false;
+				break;
+			case A:
+				aPressed = false;
+				break;
+			case S:
+				sPressed = false;
+				break;
+			case D:
+				dPressed = false;
+				break;
+			case E:
+				ePressed = false;
+			case SPACE:
+				spacePressed = false;
+			default:
+				break;
 		}
 	}
 
 	private void handleKeyPressed(KeyEvent event) {
 		switch (event.getCode()) {
-		case W:
-			wPressed = true;
-			break;
-		case A:
-			aPressed = true;
-			break;
-		case S:
-			sPressed = true;
-			break;
-		case D:
-			dPressed = true;
-			break;
-		case E:
-			ePressed = true;
-		case SPACE:
-			spacePressed = true;
-		default:
-			break;
+			case W:
+				wPressed = true;
+				break;
+			case A:
+				aPressed = true;
+				break;
+			case S:
+				sPressed = true;
+				break;
+			case D:
+				dPressed = true;
+				break;
+			case E:
+				ePressed = true;
+			case SPACE:
+				spacePressed = true;
+			default:
+				break;
 		}
 	}
 
@@ -375,7 +390,22 @@ public class Game implements Runnable {
 			}
 		};
 
+	}
 
+	public void addPlayer(String name) throws InterruptedException {
+		if (clients.contains(name)) {
+			infoSpace.put("needPlayer");
+			return;
+		}
+		clients.add(name);
+		connected++;
+		if (connected == 2) {
+			infoSpace.put("gotPlayers");
+		}
+	}
+
+	public int connectedPlayers() {
+		return connected;
 	}
 
 }

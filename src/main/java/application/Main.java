@@ -29,9 +29,7 @@ public class Main extends Application {
         	stage.setScene(scene);
         	stage.show();
             canvas.setFocusTraversable(true);
-            Game game = new Game(canvas);
-            game.startGame();
-            new Thread(game).start();
+     
 
             
            
