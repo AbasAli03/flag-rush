@@ -1,10 +1,15 @@
 package application;
 
-import org.jspace.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import org.jspace.ActualField;
+import org.jspace.FormalField;
+import org.jspace.SequentialSpace;
+import org.jspace.SpaceRepository;
+
+import javafx.scene.canvas.Canvas;
 
 public class Server {
 
@@ -46,7 +51,7 @@ public class Server {
     }
 
     private static void startGameThreads(SpaceRepository repository, List<String> clients) throws InterruptedException {
-        Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME));
+        Game game = new Game(repository.get(PLAYING_SPACE_NAME), repository.get(SERVER_INFO_SPACE_NAME), new Canvas(1000,700));
         new Thread(game).start();
         
         Mover mover = new Mover(repository.get(SERVER_INFO_SPACE_NAME), game);
