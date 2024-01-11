@@ -16,7 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.Pane;
 
-public class Server implements Runnable{
+public class Server {
 
     private static final String PLAYING_SPACE_NAME = "playing";
     private static final String PING_SPACE_NAME = "ping";
@@ -27,23 +27,15 @@ public class Server implements Runnable{
 
     public Server(String ip) throws InterruptedException {
     	this.ip = ip;
+		if(!Server.activeServers.contains(this.ip)) {
+			Server.activeServers.add(this.ip);
+			startServer(this.ip);
+		} else {
+			joinServer(this.ip);
+		}
 
     }
-    
-	@Override
-	public void run() {
-    	try {
-			if(!Server.activeServers.contains(this.ip)) {
-				Server.activeServers.add(this.ip);
-				startServer(this.ip);
-			} else {
-				joinServer(this.ip);
-			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+
 
     private static SpaceRepository initializeSpaces() {
         SpaceRepository repository = new SpaceRepository();
@@ -62,9 +54,7 @@ public class Server implements Runnable{
         clients.add(id.toString());
         startGameThreads(repository, clients, id.toString());
 
-        while (true) {
-            handleServerInfo(repository, clients);
-        }
+
     }
     
     private void joinServer(String ip) throws InterruptedException {
@@ -103,8 +93,7 @@ public class Server implements Runnable{
 		 
         new Thread(game).start();
         
-        Mover mover = new Mover(repository.get(SERVER_INFO_SPACE_NAME), game);
-        new Thread(mover).start();
+
     }
 
     private void handleServerInfo(SpaceRepository repository, List<String> clients) throws InterruptedException {
