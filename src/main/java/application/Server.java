@@ -21,6 +21,8 @@ public class Server {
     private static final String PLAYING_SPACE_NAME = "playing";
     private static final String PING_SPACE_NAME = "ping";
     private static final String SERVER_INFO_SPACE_NAME = "serverInfo";
+    private static final String CLIENTS_IN_SERVER = "CL";
+
     static ArrayList<String> clients = new ArrayList<>();
     private String ip;
     static ArrayList<String> activeServers = new ArrayList<>();
@@ -69,7 +71,7 @@ public class Server {
 			repository.add(PLAYING_SPACE_NAME,space);
 			repository.add(SERVER_INFO_SPACE_NAME,space2);
 
-			
+			System.out.println("Client size when joining server: " + clients.size());
 			startGameThreads(repository, clients, id.toString());
 			
 		} catch (UnknownHostException e) {
