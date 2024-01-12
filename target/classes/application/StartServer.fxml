@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: lightgrey;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.StartServerController">
+   <children>
+      <Button layoutX="212.0" layoutY="200.0" mnemonicParsing="false" onAction="#startServer" prefHeight="46.0" prefWidth="176.0" style="-fx-background-radius: 50; -fx-background-color: white;" text="Start server">
+         <font>
+            <Font name="Bodoni MT Condensed" size="24.0" />
+         </font>
+      </Button>
+      
+      <TextField fx:id="ipTextfield" layoutX="226.0" layoutY="156.0" promptText="127.0.0.1" style="-fx-border-radius: 50;" />
+      <Text layoutX="226.0" layoutY="145.0" strokeType="OUTSIDE" strokeWidth="0.0" text="IP" />
+   </children>
+</Pane>
