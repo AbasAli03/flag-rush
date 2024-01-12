@@ -1,6 +1,7 @@
 package application;
 
 import java.io.IOException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,12 +23,15 @@ import org.jspace.TemplateField;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 
 public class Game implements Runnable {
@@ -79,17 +84,22 @@ public class Game implements Runnable {
 	private int clientsJoined;
 	private String id;
 	Map<String, Player> players;
+	Player currentPlayer;
 	Player otherPlayer;
 	RemoteSpace space3;
+	RemoteSpace getting;
+	private GameLogic gameLogic;
+
 
 	public Game(String ip, Canvas canvas, int clientsJoined, String id)
 			throws InterruptedException, UnknownHostException, IOException {
+				gameLogic = new GameLogic(this);
 
 		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
 		RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.SERVER_INFO_SPACE_NAME + "?keep");
-		 space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
+		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
+		space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 
-		this.playing = space;
 		this.infoSpace = space2;
 		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
@@ -111,20 +121,21 @@ public class Game implements Runnable {
 		redPlayer.put("S", new Image("./assets/RS1.png"));
 		redPlayer.put("W", new Image("./assets/RW1.png"));
 
-		player = new Player(40, 40, new Base(40, 40), BOXW, BOXH, Color.BLUE, bluePlayer, bulletController1);
-		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, Color.RED,
+		player = new Player(40, 40, new Base(40, 40), BOXW, BOXH, "BLUE", bluePlayer, bulletController1);
+		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, "RED",
 				redPlayer, bulletController2);
 		flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
 		if (clientsJoined == 1) {
-			players.put(id, player);
+			currentPlayer = player;
 			otherPlayer = player2;
-
+			this.getting = space4;
+			this.playing = space;
 
 		} else if (clientsJoined == 2) {
-			players.put(id, player2);
+			currentPlayer = player2;
 			otherPlayer = player;
-
-
+			this.getting = space;
+			this.playing = space4;
 		}
 
 		initializeGrid();
@@ -133,38 +144,43 @@ public class Game implements Runnable {
 
 	@Override
 	public void run() {
-		if (clientsJoined < 2) {
-			System.out.println("Waiting for players");
+		
+		boolean waitingForPlayers = true;
 
+		while (waitingForPlayers) {
+			if (clientsJoined < 2) {
+				System.out.println("Waiting for players");
 				try {
 					List<Object[]> clientObjectsUpdated = space3.queryAll(new ActualField("new Client"));
 					this.clientsJoined = clientObjectsUpdated.size();
-					System.out.println("after query " + clientsJoined);
 
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+			}
+			if (clientsJoined == 2) {
+				waitingForPlayers = false;
+			}
+
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		gameRunning = true;
+		startGame();
+		gameLoop.start();
+		new Thread(gameLogic).start();
+
 			
-
-		}
-		if (clientsJoined >= 2) {
-			gameRunning = true;
-
-		}
-		while (gameRunning) {
-			startGame();
-			gameLoop.start();
-
-			// Send data 60 times per second
 
 			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
 			dataSenderScheduler.scheduleAtFixedRate(() -> {
 
 				try {
-					//System.out.println("before put");
-					playing.put(players.get(id));
-					//System.out.println("after put");
+					playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
+							currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed);
 
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -177,10 +193,24 @@ public class Game implements Runnable {
 			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1);
 			dataReceiverScheduler.scheduleAtFixedRate(() -> {
 				try {
-					//System.out.println("before recieve");
+					// System.out.println("before recieve");
 
-					otherPlayer = (Player) playing.get(new FormalField(Player.class))[0];
-					//System.out.println("after recieve");
+					Object[] otherPlayerObjects = getting.get(new FormalField(Integer.class),
+							new FormalField(Integer.class), new FormalField(Integer.class),
+							new FormalField(Integer.class), new FormalField(Boolean.class),
+							new FormalField(Integer.class),
+							new FormalField(String.class)
+
+					);
+
+					otherPlayer.x = (Integer) otherPlayerObjects[0];
+					otherPlayer.y = (Integer) otherPlayerObjects[1];
+					otherPlayer.height = (Integer) otherPlayerObjects[2];
+					otherPlayer.width = (Integer) otherPlayerObjects[3];
+					otherPlayer.flagEquipped = (Boolean) otherPlayerObjects[4];
+					otherPlayer.health = (Integer) otherPlayerObjects[5];
+
+					otherPlayer.lastPressed = (String) otherPlayerObjects[6];
 
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
@@ -190,7 +220,7 @@ public class Game implements Runnable {
 
 		}
 
-	}
+	
 
 	public static void initializeGrid() {
 		for (int i = 0; i < ROWS; i++) {
@@ -270,18 +300,18 @@ public class Game implements Runnable {
 			int speed = 5;
 			int delay = 7;
 
-			int bulletX = players.get(id).x + player.width / 2;
-			int bulletY = players.get(id).y;
+			int bulletX = currentPlayer.x + player.width / 2;
+			int bulletY = currentPlayer.y;
 			if (lastPressed.equals("A") || lastPressed.equals("D")) {
-				bulletY = players.get(id).y + players.get(id).height / 2;
+				bulletY = currentPlayer.y + currentPlayer.height / 2;
 			}
-			players.get(id).bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
+			currentPlayer.bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
 
 		}
 
-		if (!isCollidingWithTiles(players.get(id).x + deltaX, players.get(id).y + deltaY)) {
-			players.get(id).x += deltaX;
-			players.get(id).y += deltaY;
+		if (!isCollidingWithTiles(currentPlayer.x + deltaX, currentPlayer.y + deltaY)) {
+			currentPlayer.x += deltaX;
+			currentPlayer.y += deltaY;
 		}
 
 		SPEED = 5;
@@ -289,35 +319,35 @@ public class Game implements Runnable {
 		int pickupRange = 20;
 
 		// Check if the player.get(id) is within the pickup range of the flag
-		if (Math.abs(players.get(id).x - flag.x) < pickupRange && Math.abs(players.get(id).y - flag.y) < pickupRange) {
+		if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
 			if (ePressed) {
-				if (flag.equiped && players.get(id).flagEquipped) {
+				if (flag.equiped && currentPlayer.flagEquipped) {
 					flag.equiped = false;
-					players.get(id).flagEquipped = false;
+					currentPlayer.flagEquipped = false;
 				} else {
 					flag.equiped = true;
-					players.get(id).flagEquipped = true;
+					currentPlayer.flagEquipped = true;
 				}
 			}
 		}
 		// move flag with player.get(id)
-		if (players.get(id).flagEquipped && flag.equiped) {
-			flag.x = players.get(id).x + 5;
-			flag.y = players.get(id).y + 5;
+		if (currentPlayer.flagEquipped && flag.equiped) {
+			flag.x = currentPlayer.x + 5;
+			flag.y = currentPlayer.y + 5;
 
 		}
 		int dropRange = 50;
 
-		if (Math.abs(players.get(id).base.x - flag.x) < dropRange
-				&& Math.abs(players.get(id).base.y - flag.y) < dropRange
-				&& !flag.equiped && !players.get(id).flagEquipped) {
+		if (Math.abs(currentPlayer.base.x - flag.x) < dropRange
+				&& Math.abs(currentPlayer.base.y - flag.y) < dropRange
+				&& !flag.equiped && !currentPlayer.flagEquipped) {
 
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
 
 		}
 
-		if (players.get(id).health == 0) {
+		if (currentPlayer.health == 0) {
 			winningPlayer = "Red";
 			gameLoop.stop();
 			displayWinnerPopup(winningPlayer);
@@ -329,7 +359,7 @@ public class Game implements Runnable {
 		}
 
 		// removing bullets that collide with enemy
-		Iterator<Bullet> iterator = players.get(id).bulletController.bullets.iterator();
+		Iterator<Bullet> iterator = currentPlayer.bulletController.bullets.iterator();
 		while (iterator.hasNext()) {
 			Bullet bullet = iterator.next();
 			if (bullet.isColliding(otherPlayer)) {
@@ -338,22 +368,32 @@ public class Game implements Runnable {
 		}
 		// checking for collisions
 		for (Tile tile : tiles) {
-			players.get(id).bulletController.isColliding(tile);
+			currentPlayer.bulletController.isColliding(tile);
 
 		}
+		// System.out.println("Updating player at (" + currentPlayer.x + ", " +
+		// currentPlayer.y + ")");
 
 	}
 
 	private void draw() {
-		// Clear canvas
-		ctx.clearRect(0, 0, WIDTH, HEIGHT);
-		otherPlayer.draw(ctx, lastPressed);
-		players.get(id).draw(ctx, lastPressed);
-		flag.draw(ctx);
-		tiles.forEach(tile -> {
-			tile.draw(ctx);
+		Platform.runLater(() -> {
+
+			// Clear canvas
+			ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+			otherPlayer.draw(ctx);
+			currentPlayer.draw(ctx);
+			flag.draw(ctx);
+			tiles.forEach(tile -> {
+				tile.draw(ctx);
+			});
+
+			currentPlayer.bulletController.draw(ctx);
+			// System.out.println("Drawing player at (" + currentPlayer.x + ", " +
+			// currentPlayer.y + ")");
+
 		});
-		players.get(id).bulletController.draw(ctx);
 
 	}
 
@@ -370,8 +410,8 @@ public class Game implements Runnable {
 
 	private boolean isCollidingWithTiles(int newX, int newY) {
 		for (Tile tile : tiles) {
-			if (newX < tile.getX() + tile.getwidth() && newX + players.get(id).getwidth() > tile.getX()
-					&& newY < tile.getY() + tile.getHeight() && newY + players.get(id).getHeight() > tile.getY()) {
+			if (newX < tile.getX() + tile.getwidth() && newX + currentPlayer.getwidth() > tile.getX()
+					&& newY < tile.getY() + tile.getHeight() && newY + currentPlayer.getHeight() > tile.getY()) {
 				return true; // Collision detected
 			}
 		}
@@ -425,12 +465,16 @@ public class Game implements Runnable {
 	}
 
 	public void startGame() {
-		canvas.setOnKeyReleased(this::handleKeyReleased);
-		canvas.setOnKeyPressed(this::handleKeyPressed);
+		Platform.runLater(() -> {
+			Main.scene.setRoot(new BorderPane(canvas));
+			Main.scene.setOnKeyReleased(this::handleKeyReleased);
+			Main.scene.setOnKeyPressed(this::handleKeyPressed);
+		});
 
 		lastUpdateTime = System.nanoTime();
 
 		gameLoop = new AnimationTimer() {
+
 			double accumulatedTime = 0.0;
 
 			@Override
@@ -452,16 +496,30 @@ public class Game implements Runnable {
 
 	}
 
-	public void addPlayer(String name) throws InterruptedException {
 
-		connected++;
-		if (connected == 2) {
-			infoSpace.put("gotPlayers");
+	private class GameLogic implements Runnable {
+		private Game game;
+ 
+		public GameLogic(Game game) {
+			this.game = game;
 		}
-	}
+ 
+		@Override
+		public void run() {
+			while (game.gameRunning) {
+				try {
+					// Sleep for 100ms to slow down the game
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+		 
+				// Move the game logic here
+				game.update();
+				game.draw();
+			}
+		 }
 
-	public int connectedPlayers() {
-		return connected;
+	 
 	}
-
 }

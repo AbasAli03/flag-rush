@@ -17,6 +17,7 @@ class Mover implements Runnable {
     }
 
     public void run() {
+        /* 
         while (true) {
             try {
 
@@ -43,7 +44,7 @@ class Mover implements Runnable {
             }
 
         }
-
+*/
     }
 
 }

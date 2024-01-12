@@ -1,5 +1,8 @@
 package controllers;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
+
 import application.Server;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -11,7 +14,7 @@ public class JoinServerController {
     private TextField ipTextfield;
 
     @FXML
-    void joinServer(ActionEvent event) {
+    void joinServer(ActionEvent event) throws UnknownHostException, IOException {
     	String ip = ipTextfield.getText().toString();
     	System.out.println(ip);
     	try {

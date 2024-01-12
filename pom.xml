@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>dk.dtu</groupId>
     <artifactId>02148_project</artifactId>
@@ -10,21 +11,21 @@
         <maven.compiler.target>19</maven.compiler.target>
     </properties>
     <dependencies>
-          <dependency>
-              <groupId>io.github.pspaces.jspace</groupId>
-              <artifactId>common</artifactId>
-              <version>[0.0,)</version>
-          </dependency>
-            <dependency>
-    <groupId>org.openjfx</groupId>
-    <artifactId>javafx-controls</artifactId>
-    <version>11</version>
-  </dependency>
-  <dependency>
-    <groupId>org.openjfx</groupId>
-    <artifactId>javafx-fxml</artifactId>
-    <version>22-ea+16</version>
-</dependency>
+        <dependency>
+            <groupId>io.github.pspaces.jspace</groupId>
+            <artifactId>common</artifactId>
+            <version>[0.0,)</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>22-ea+16</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -34,6 +35,10 @@
                 <version>3.8.0</version>
                 <configuration>
                     <release>11</release>
+                    <compilerArgs>
+                        <arg>--add-opens</arg>
+                        <arg>javafx.graphics/javafx.scene.paint=ALL-UNNAMED</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

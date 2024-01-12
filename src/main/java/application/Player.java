@@ -17,20 +17,29 @@ public class Player implements Collidable {
     public int speed = Game.SPEED;
     public Base base;
     public BulletController bulletController;
-    public Map<String,Image> images;
-    
+    public Map<String, Image> images;
+    public String stringColor;
+    public String lastPressed;
 
-    public Player(int x, int y, Base base, int height, int width,Color color, Map<String,Image> images , BulletController bulletController) {
+    public Player(int x, int y, Base base, int height, int width, String stringColor, Map<String, Image> images,
+            BulletController bulletController) {
+        this.lastPressed="W";
         this.bulletController = bulletController;
         this.base = base;
         this.x = x;
         this.y = y;
         this.height = height;
         this.width = width;
-        this.color = color;
+
         this.images = images;
         flagEquipped = false;
         health = 100;
+        this.stringColor = stringColor;
+        if (stringColor.equals("RED")) {
+            this.color = Color.RED;
+        } else {
+            this.color = Color.BLUE;
+        }
 
     }
 
@@ -54,9 +63,9 @@ public class Player implements Collidable {
         return height;
     }
 
-    public void draw(GraphicsContext ctx, String lastPressed) {
+    public void draw(GraphicsContext ctx) {
         ctx.drawImage(images.get(lastPressed), x, y, width, height);
-        base.draw(ctx, this.color);
+        base.draw(ctx,this.stringColor);
 
     }
 
@@ -70,6 +79,14 @@ public class Player implements Collidable {
         }
 
         return false;
+    }
+
+    public Color getColor(String color) {
+        if (color.equals("RED")) {
+            return Color.RED;
+        } else {
+            return Color.BLUE;
+        }
     }
 
 }
