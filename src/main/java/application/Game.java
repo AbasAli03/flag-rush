@@ -190,7 +190,7 @@ public class Game implements Runnable {
 
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed);
+						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed,flag.x,flag.y,flag.equiped);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -209,7 +209,7 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
-						new FormalField(String.class)
+						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),new FormalField(Boolean.class)
 
 				);
 
@@ -221,13 +221,17 @@ public class Game implements Runnable {
 				otherPlayer.health = (Integer) otherPlayerObjects[5];
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
+				flag.x = (Integer) otherPlayerObjects[7];
+				flag.y = (Integer) otherPlayerObjects[8];
+				flag.equiped = (Boolean) otherPlayerObjects[9];
+
+				
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}, 0, 16, TimeUnit.MILLISECONDS);
-
 	}
 
 	public static void initializeGrid() {
