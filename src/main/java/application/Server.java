@@ -30,7 +30,6 @@ public class Server {
     static final String GETTING_SPACE_NAME = "getting";
     static final String MAP = "map";
 
-
     static ArrayList<String> clients = new ArrayList<>();
     private String ip;
     static ArrayList<String> activeServers = new ArrayList<>();
@@ -56,9 +55,8 @@ public class Server {
         repository.add(PING_SPACE_NAME, new SequentialSpace());
         repository.add(SERVER_INFO_SPACE_NAME, new SequentialSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
-        repository.add(GETTING_SPACE_NAME,new StackSpace());
-        repository.add(MAP,new QueueSpace());
-        
+        repository.add(GETTING_SPACE_NAME, new StackSpace());
+        repository.add(MAP, new QueueSpace());
 
         return repository;
     }
@@ -90,25 +88,22 @@ public class Server {
 
     }
 
-private void startGameThreads(String ip, int clientsJoined, String id)
-        throws InterruptedException, UnknownHostException, IOException {
+    private void startGameThreads(String ip, int clientsJoined, String id)
+            throws InterruptedException, UnknownHostException, IOException {
 
-    Canvas canvas = new Canvas(1000, 700);
-    Game game = new Game(ip, canvas, clientsJoined, id);
+        Canvas canvas = new Canvas(1000, 700);
+        Game game = new Game(ip, canvas, clientsJoined, id);
 
-    // Set the root to the new BorderPane
-    Main.root=(new BorderPane(canvas));
-    Parent root= Main.root;
+        // Set the root to the new BorderPane
+        Main.root = (new BorderPane(canvas));
+        Parent root = Main.root;
 
-    // The rest of your code remains unchanged
-    Main.scene.setRoot(root);
-    Main.stage.show();
+        // The rest of your code remains unchanged
+        Main.scene.setRoot(root);
+        Main.stage.show();
 
-    new Thread(game).start();
-}
-
-    
-
+        new Thread(game).start();
+    }
 
     private void handlePlayerConnection(String ip) throws InterruptedException, UnknownHostException, IOException {
 

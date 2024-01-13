@@ -183,8 +183,8 @@ public class Game implements Runnable {
 
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
-						flag.equiped);
+						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
+						flag.equiped, currentPlayer.bulletController);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -204,7 +204,7 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
 						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),
-						new FormalField(Boolean.class)
+						new FormalField(Boolean.class), new FormalField(BulletController.class)
 
 				);
 
@@ -213,12 +213,13 @@ public class Game implements Runnable {
 				otherPlayer.height = (Integer) otherPlayerObjects[2];
 				otherPlayer.width = (Integer) otherPlayerObjects[3];
 				otherPlayer.flagEquipped = (Boolean) otherPlayerObjects[4];
-				otherPlayer.health = (Integer) otherPlayerObjects[5];
+				currentPlayer.health = (Integer) otherPlayerObjects[5];
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
 				flag.x = (Integer) otherPlayerObjects[7];
 				flag.y = (Integer) otherPlayerObjects[8];
 				flag.equiped = (Boolean) otherPlayerObjects[9];
+				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -229,50 +230,7 @@ public class Game implements Runnable {
 
 	public static void initializeGrid() {
 		grid = Grid.map;
-		/*
-		 * for (int i = 0; i < ROWS; i++) {
-		 * for (int j = 0; j < COLS; j++) {
-		 * if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
-		 * grid[i][j] = 1;
-		 * }
-		 * }
-		 * }
-		 * 
-		 * Random random = new Random();
-		 * double probability = 0.2;
-		 * 
-		 * // randomize map
-		 * for (int i = 1; i < ROWS - 1; i++) {
-		 * for (int j = 1; j < COLS - 1; j++) {
-		 * if (random.nextDouble() < probability) {
-		 * grid[i][j] = 1;
-		 * }
-		 * }
-		 * }
-		 * 
-		 * // avoid base
-		 * for (int i = 1; i <= 5; i++) {
-		 * for (int j = 1; j <= 5; j++) {
-		 * grid[i][j] = 0;
-		 * 
-		 * }
-		 * }
-		 * // avoid base
-		 * for (int i = ROWS - 6; i < ROWS - 1; i++) {
-		 * for (int j = COLS - 6; j < COLS - 1; j++) {
-		 * grid[i][j] = 0;
-		 * 
-		 * }
-		 * }
-		 * 
-		 * // avoid flag
-		 * for (int i = (ROWS / 2) - 2; i < (ROWS / 2) + 3; i++) {
-		 * for (int j = (COLS / 2) - 2; j < (COLS / 2) + 3; j++) {
-		 * grid[i][j] = 0;
-		 * 
-		 * }
-		 * }
-		 */
+
 		// create tiles
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
@@ -312,7 +270,7 @@ public class Game implements Runnable {
 			int bulletY = currentPlayer.y;
 			if (lastPressed.equals("A") || lastPressed.equals("D")) {
 				bulletY = currentPlayer.y + currentPlayer.height / 2;
-				System.out.println(ePressed);
+
 			}
 			currentPlayer.bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
 
@@ -334,7 +292,7 @@ public class Game implements Runnable {
 				if (flag.equiped && currentPlayer.flagEquipped) {
 					flag.equiped = false;
 					currentPlayer.flagEquipped = false;
-				
+
 				} else {
 					flag.equiped = true;
 					currentPlayer.flagEquipped = true;
@@ -375,18 +333,25 @@ public class Game implements Runnable {
 			displayWinnerPopup(winningPlayer);
 		}
 
-		// removing bullets that collide with enemy
+		// Remove bullets that collide with the enemy
 		Iterator<Bullet> iterator = currentPlayer.bulletController.bullets.iterator();
 		while (iterator.hasNext()) {
 			Bullet bullet = iterator.next();
+
+			// Check for collisions with the other player
 			if (bullet.isColliding(otherPlayer)) {
+				
+				System.out.println(otherPlayer.health);
 				iterator.remove();
 			}
-		}
-		// checking for collisions
-		for (Tile tile : tiles) {
-			currentPlayer.bulletController.isColliding(tile);
 
+			// Check for collisions with tiles
+			for (Tile tile : tiles) {
+				if (bullet.isColliding(tile)) {
+					iterator.remove();
+					// Handle tile-specific logic if needed
+				}
+			}
 		}
 		// System.out.println("Updating player at (" + currentPlayer.x + ", " +
 		// currentPlayer.y + ")");
@@ -407,6 +372,7 @@ public class Game implements Runnable {
 			});
 
 			currentPlayer.bulletController.draw(ctx);
+			otherPlayer.bulletController.draw(ctx);
 			// System.out.println("Drawing player at (" + currentPlayer.x + ", " +
 			// currentPlayer.y + ")");
 

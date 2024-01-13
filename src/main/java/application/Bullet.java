@@ -10,7 +10,7 @@ public class Bullet {
 	private int damage;
 	private int height;
 	private int width;
-	private Color color;
+	private String stringColor;
 	public String direction;
 
 	public Bullet(int x, int y, int speed, String direction) {
@@ -20,12 +20,18 @@ public class Bullet {
 		this.speed = speed;
 		this.width = 5;
 		this.height = 5;
-		this.color = Color.BLACK;
+		this.stringColor = "BLACK";
 		this.damage=10;
 	}
+	
+	  public Color getColor() {
+          return Color.BLACK;
+      
+  }
+
 
 	public void draw(GraphicsContext ctx) {
-		ctx.setFill(this.color);
+		ctx.setFill(getColor());
 		ctx.fillRect(x, y, width, height);
 	}
 

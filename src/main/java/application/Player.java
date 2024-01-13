@@ -20,6 +20,7 @@ public class Player implements Collidable {
     public Map<String, Image> images;
     public String stringColor;
     public String lastPressed;
+    
 
     public Player(int x, int y, Base base, int height, int width, String stringColor, Map<String, Image> images,
             BulletController bulletController) {
