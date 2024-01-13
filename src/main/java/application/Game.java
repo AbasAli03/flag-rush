@@ -91,7 +91,7 @@ public class Game implements Runnable {
 	Player otherPlayer;
 	RemoteSpace space3;
 	RemoteSpace getting;
-	
+
 	private GameLogic gameLogic;
 
 	public Game(String ip, Canvas canvas, int clientsJoined, String id)
@@ -136,19 +136,12 @@ public class Game implements Runnable {
 			this.getting = space4;
 			this.playing = space;
 
-			
-			
-			
-		
-
 		} else if (clientsJoined == 2) {
-			
+
 			currentPlayer = player2;
 			otherPlayer = player;
 			this.getting = space;
 			this.playing = space4;
-			
-			
 
 		}
 		initializeGrid();
@@ -190,7 +183,8 @@ public class Game implements Runnable {
 
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed,flag.x,flag.y,flag.equiped);
+						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
+						flag.equiped);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -209,7 +203,8 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
-						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),new FormalField(Boolean.class)
+						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),
+						new FormalField(Boolean.class)
 
 				);
 
@@ -225,8 +220,6 @@ public class Game implements Runnable {
 				flag.y = (Integer) otherPlayerObjects[8];
 				flag.equiped = (Boolean) otherPlayerObjects[9];
 
-				
-
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -235,51 +228,51 @@ public class Game implements Runnable {
 	}
 
 	public static void initializeGrid() {
-		grid=Grid.map;
-		/* 
-		for (int i = 0; i < ROWS; i++) {
-			for (int j = 0; j < COLS; j++) {
-				if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
-					grid[i][j] = 1;
-				}
-			}
-		}
-
-		Random random = new Random();
-		double probability = 0.2;
-
-		// randomize map
-		for (int i = 1; i < ROWS - 1; i++) {
-			for (int j = 1; j < COLS - 1; j++) {
-				if (random.nextDouble() < probability) {
-					grid[i][j] = 1;
-				}
-			}
-		}
-
-		// avoid base
-		for (int i = 1; i <= 5; i++) {
-			for (int j = 1; j <= 5; j++) {
-				grid[i][j] = 0;
-
-			}
-		}
-		// avoid base
-		for (int i = ROWS - 6; i < ROWS - 1; i++) {
-			for (int j = COLS - 6; j < COLS - 1; j++) {
-				grid[i][j] = 0;
-
-			}
-		}
-
-		// avoid flag
-		for (int i = (ROWS / 2) - 2; i < (ROWS / 2) + 3; i++) {
-			for (int j = (COLS / 2) - 2; j < (COLS / 2) + 3; j++) {
-				grid[i][j] = 0;
-
-			}
-		}
-*/
+		grid = Grid.map;
+		/*
+		 * for (int i = 0; i < ROWS; i++) {
+		 * for (int j = 0; j < COLS; j++) {
+		 * if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
+		 * grid[i][j] = 1;
+		 * }
+		 * }
+		 * }
+		 * 
+		 * Random random = new Random();
+		 * double probability = 0.2;
+		 * 
+		 * // randomize map
+		 * for (int i = 1; i < ROWS - 1; i++) {
+		 * for (int j = 1; j < COLS - 1; j++) {
+		 * if (random.nextDouble() < probability) {
+		 * grid[i][j] = 1;
+		 * }
+		 * }
+		 * }
+		 * 
+		 * // avoid base
+		 * for (int i = 1; i <= 5; i++) {
+		 * for (int j = 1; j <= 5; j++) {
+		 * grid[i][j] = 0;
+		 * 
+		 * }
+		 * }
+		 * // avoid base
+		 * for (int i = ROWS - 6; i < ROWS - 1; i++) {
+		 * for (int j = COLS - 6; j < COLS - 1; j++) {
+		 * grid[i][j] = 0;
+		 * 
+		 * }
+		 * }
+		 * 
+		 * // avoid flag
+		 * for (int i = (ROWS / 2) - 2; i < (ROWS / 2) + 3; i++) {
+		 * for (int j = (COLS / 2) - 2; j < (COLS / 2) + 3; j++) {
+		 * grid[i][j] = 0;
+		 * 
+		 * }
+		 * }
+		 */
 		// create tiles
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
@@ -289,7 +282,6 @@ public class Game implements Runnable {
 
 			}
 		}
-		
 
 	}
 
@@ -312,7 +304,7 @@ public class Game implements Runnable {
 		} else if (dPressed) {
 			lastPressed = "D";
 			deltaX = SPEED;
-		} else if (spacePressed) {
+		} else if (spacePressed && !ePressed) {
 			int speed = 5;
 			int delay = 7;
 
@@ -320,6 +312,7 @@ public class Game implements Runnable {
 			int bulletY = currentPlayer.y;
 			if (lastPressed.equals("A") || lastPressed.equals("D")) {
 				bulletY = currentPlayer.y + currentPlayer.height / 2;
+				System.out.println(ePressed);
 			}
 			currentPlayer.bulletController.shoot(bulletX, bulletY, speed, delay, lastPressed);
 
@@ -332,26 +325,34 @@ public class Game implements Runnable {
 
 		SPEED = 5;
 
-		int pickupRange = 20;
+		int pickupRange = 30;
 
 		// Check if the player.get(id) is within the pickup range of the flag
-		if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
-			if (ePressed) {
+		if (ePressed) {
+			if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
+
 				if (flag.equiped && currentPlayer.flagEquipped) {
 					flag.equiped = false;
 					currentPlayer.flagEquipped = false;
+				
 				} else {
 					flag.equiped = true;
 					currentPlayer.flagEquipped = true;
+
 				}
+
 			}
 		}
 		// move flag with player.get(id)
 		if (currentPlayer.flagEquipped && flag.equiped) {
-			flag.x = currentPlayer.x + 5;
-			flag.y = currentPlayer.y + 5;
+			flag.x = currentPlayer.x;
+			flag.y = currentPlayer.y;
 
+		} else if (!currentPlayer.flagEquipped && flag.equiped) {
+			flag.x = otherPlayer.x;
+			flag.y = otherPlayer.y;
 		}
+
 		int dropRange = 50;
 
 		if (Math.abs(currentPlayer.base.x - flag.x) < dropRange
