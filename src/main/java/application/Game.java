@@ -1,9 +1,11 @@
 package application;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.jspace.ActualField;
 import org.jspace.FormalField;
@@ -88,16 +91,18 @@ public class Game implements Runnable {
 	Player otherPlayer;
 	RemoteSpace space3;
 	RemoteSpace getting;
+	
 	private GameLogic gameLogic;
-
 
 	public Game(String ip, Canvas canvas, int clientsJoined, String id)
 			throws InterruptedException, UnknownHostException, IOException {
-				gameLogic = new GameLogic(this);
+		gameLogic = new GameLogic(this);
 
 		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
 		RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.SERVER_INFO_SPACE_NAME + "?keep");
 		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
+		RemoteSpace map = new RemoteSpace("tcp://" + ip + ":9001/" + Server.MAP + "?keep");
+
 		space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 
 		this.infoSpace = space2;
@@ -131,20 +136,27 @@ public class Game implements Runnable {
 			this.getting = space4;
 			this.playing = space;
 
+			
+			
+			
+		
+
 		} else if (clientsJoined == 2) {
+			
 			currentPlayer = player2;
 			otherPlayer = player;
 			this.getting = space;
 			this.playing = space4;
+			
+			
+
 		}
-
 		initializeGrid();
-
 	}
 
 	@Override
 	public void run() {
-		
+
 		boolean waitingForPlayers = true;
 
 		while (waitingForPlayers) {
@@ -173,56 +185,54 @@ public class Game implements Runnable {
 		gameLoop.start();
 		new Thread(gameLogic).start();
 
-			
+		ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
+		dataSenderScheduler.scheduleAtFixedRate(() -> {
 
-			ScheduledExecutorService dataSenderScheduler = Executors.newScheduledThreadPool(1);
-			dataSenderScheduler.scheduleAtFixedRate(() -> {
+			try {
+				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
+						currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed);
 
-				try {
-					playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-							currentPlayer.flagEquipped, currentPlayer.health, currentPlayer.lastPressed);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		}, 0, 16, TimeUnit.MILLISECONDS);
 
-			}, 0, 16, TimeUnit.MILLISECONDS);
+		// Recieve data 60 times per second
+		ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1);
+		dataReceiverScheduler.scheduleAtFixedRate(() -> {
+			try {
+				// System.out.println("before recieve");
 
-			// Recieve data 60 times per second
-			ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1);
-			dataReceiverScheduler.scheduleAtFixedRate(() -> {
-				try {
-					// System.out.println("before recieve");
+				Object[] otherPlayerObjects = getting.get(new FormalField(Integer.class),
+						new FormalField(Integer.class), new FormalField(Integer.class),
+						new FormalField(Integer.class), new FormalField(Boolean.class),
+						new FormalField(Integer.class),
+						new FormalField(String.class)
 
-					Object[] otherPlayerObjects = getting.get(new FormalField(Integer.class),
-							new FormalField(Integer.class), new FormalField(Integer.class),
-							new FormalField(Integer.class), new FormalField(Boolean.class),
-							new FormalField(Integer.class),
-							new FormalField(String.class)
+				);
 
-					);
+				otherPlayer.x = (Integer) otherPlayerObjects[0];
+				otherPlayer.y = (Integer) otherPlayerObjects[1];
+				otherPlayer.height = (Integer) otherPlayerObjects[2];
+				otherPlayer.width = (Integer) otherPlayerObjects[3];
+				otherPlayer.flagEquipped = (Boolean) otherPlayerObjects[4];
+				otherPlayer.health = (Integer) otherPlayerObjects[5];
 
-					otherPlayer.x = (Integer) otherPlayerObjects[0];
-					otherPlayer.y = (Integer) otherPlayerObjects[1];
-					otherPlayer.height = (Integer) otherPlayerObjects[2];
-					otherPlayer.width = (Integer) otherPlayerObjects[3];
-					otherPlayer.flagEquipped = (Boolean) otherPlayerObjects[4];
-					otherPlayer.health = (Integer) otherPlayerObjects[5];
+				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
 
-					otherPlayer.lastPressed = (String) otherPlayerObjects[6];
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}, 0, 16, TimeUnit.MILLISECONDS);
 
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}, 0, 16, TimeUnit.MILLISECONDS);
-
-		}
-
-	
+	}
 
 	public static void initializeGrid() {
+		grid=Grid.map;
+		/* 
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
 				if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
@@ -265,7 +275,7 @@ public class Game implements Runnable {
 
 			}
 		}
-
+*/
 		// create tiles
 		for (int i = 0; i < ROWS; i++) {
 			for (int j = 0; j < COLS; j++) {
@@ -275,6 +285,8 @@ public class Game implements Runnable {
 
 			}
 		}
+		
+
 	}
 
 	private void update() {
@@ -496,14 +508,13 @@ public class Game implements Runnable {
 
 	}
 
-
 	private class GameLogic implements Runnable {
 		private Game game;
- 
+
 		public GameLogic(Game game) {
 			this.game = game;
 		}
- 
+
 		@Override
 		public void run() {
 			while (game.gameRunning) {
@@ -513,13 +524,12 @@ public class Game implements Runnable {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-		 
+
 				// Move the game logic here
 				game.update();
 				game.draw();
 			}
-		 }
+		}
 
-	 
 	}
 }

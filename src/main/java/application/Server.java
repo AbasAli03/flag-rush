@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.jspace.ActualField;
 import org.jspace.FormalField;
+import org.jspace.QueueSpace;
 import org.jspace.RemoteSpace;
 import org.jspace.SequentialSpace;
 import org.jspace.SpaceRepository;
@@ -27,6 +28,8 @@ public class Server {
     static final String SERVER_INFO_SPACE_NAME = "serverInfo";
     static final String CLIENTS_IN_SERVER = "clientsInServer";
     static final String GETTING_SPACE_NAME = "getting";
+    static final String MAP = "map";
+
 
     static ArrayList<String> clients = new ArrayList<>();
     private String ip;
@@ -54,6 +57,7 @@ public class Server {
         repository.add(SERVER_INFO_SPACE_NAME, new SequentialSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME,new StackSpace());
+        repository.add(MAP,new QueueSpace());
         
 
         return repository;

@@ -11,6 +11,7 @@ public class Tile implements Collidable{
 	public int y;
 	public int height;
 	public int width;
+	
 
 	public Tile(int x, int y, int height, int width) {
 		this.image = image;
@@ -44,4 +45,6 @@ public class Tile implements Collidable{
 	public int getHeight() {
 		return height;
 	}
+
+	
 }
