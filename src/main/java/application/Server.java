@@ -11,6 +11,7 @@ import org.jspace.FormalField;
 import org.jspace.QueueSpace;
 import org.jspace.RemoteSpace;
 import org.jspace.SequentialSpace;
+import org.jspace.Space;
 import org.jspace.SpaceRepository;
 import org.jspace.StackSpace;
 
@@ -28,7 +29,7 @@ public class Server {
     static final String SERVER_INFO_SPACE_NAME = "serverInfo";
     static final String CLIENTS_IN_SERVER = "clientsInServer";
     static final String GETTING_SPACE_NAME = "getting";
-    static final String MAP = "map";
+    static final String ACTION_SPACE = "action";
 
     static ArrayList<String> clients = new ArrayList<>();
     private String ip;
@@ -50,15 +51,18 @@ public class Server {
     }
 
     public SpaceRepository initializeSpaces() {
-        SpaceRepository repository = new SpaceRepository();
+        repository = new SpaceRepository();
         repository.add(PLAYING_SPACE_NAME, new StackSpace());
-        repository.add(PING_SPACE_NAME, new SequentialSpace());
-        repository.add(SERVER_INFO_SPACE_NAME, new SequentialSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME, new StackSpace());
-        repository.add(MAP, new QueueSpace());
+        repository.add(ACTION_SPACE, new QueueSpace());
 
         return repository;
+    }
+
+    public static void shutdownServer(SpaceRepository repository) throws UnknownHostException, IOException {
+        repository.closeGates();
+        
     }
 
     public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
@@ -70,7 +74,7 @@ public class Server {
         List<Object[]> clientObjectsUpdated = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client"));
         int clientsJoined = clientObjectsUpdated.size();
 
-        startGameThreads(ip, clientsJoined, id.toString());
+        startGameThreads(ip, clientsJoined, id.toString(), repository);
 
     }
 
@@ -84,15 +88,15 @@ public class Server {
                 .queryAll(new ActualField("new Client"));
         int clientsJoined = clientObjectsUpdated.size();
 
-        startGameThreads(ip, clientsJoined, id.toString());
+        startGameThreads(ip, clientsJoined, id.toString(), repository);
 
     }
 
-    private void startGameThreads(String ip, int clientsJoined, String id)
+    private void startGameThreads(String ip, int clientsJoined, String id, SpaceRepository repository)
             throws InterruptedException, UnknownHostException, IOException {
 
         Canvas canvas = new Canvas(1000, 700);
-        Game game = new Game(ip, canvas, clientsJoined, id);
+        Game game = new Game(ip, canvas, clientsJoined, id, repository);
 
         // Set the root to the new BorderPane
         Main.root = (new BorderPane(canvas));

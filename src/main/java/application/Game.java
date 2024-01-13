@@ -26,16 +26,20 @@ import org.jspace.TemplateField;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 
 public class Game implements Runnable {
 
@@ -80,8 +84,11 @@ public class Game implements Runnable {
 	boolean spacePressed = false;
 	String lastPressed = "";
 	boolean gameRunning = false;
+	boolean disconected = false;
 
-	Space playing, infoSpace;
+	volatile boolean gameEnded = false;
+
+	Space playing;
 	private int connected = 0;
 	private boolean started = false;
 	private int clientsJoined;
@@ -91,31 +98,28 @@ public class Game implements Runnable {
 	Player otherPlayer;
 	RemoteSpace space3;
 	RemoteSpace getting;
+	private String ip;
 
 	private GameLogic gameLogic;
+	SpaceRepository repository;
 
-	public Game(String ip, Canvas canvas, int clientsJoined, String id)
+	public Game(String ip, Canvas canvas, int clientsJoined, String id, SpaceRepository repository)
 			throws InterruptedException, UnknownHostException, IOException {
 		gameLogic = new GameLogic(this);
-
+		this.repository = repository;
 		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
-		RemoteSpace space2 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.SERVER_INFO_SPACE_NAME + "?keep");
 		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
-		RemoteSpace map = new RemoteSpace("tcp://" + ip + ":9001/" + Server.MAP + "?keep");
 
 		space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 
-		this.infoSpace = space2;
 		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
 		this.id = id;
 		players = new HashMap<>();
-		infoSpace.put("needPlayer");
-		infoSpace.put("needPlayer");
 
 		this.canvas = canvas;
 		this.ctx = this.canvas.getGraphicsContext2D();
-
+		this.ip = ip;
 		bluePlayer.put("A", new Image("./assets/BA1.png"));
 		bluePlayer.put("D", new Image("./assets/BD1.png"));
 		bluePlayer.put("S", new Image("./assets/BS1.png"));
@@ -184,7 +188,7 @@ public class Game implements Runnable {
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
 						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
-						flag.equiped, currentPlayer.bulletController);
+						flag.equiped, currentPlayer.bulletController, gameEnded);
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -204,7 +208,8 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
 						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),
-						new FormalField(Boolean.class), new FormalField(BulletController.class)
+						new FormalField(Boolean.class), new FormalField(BulletController.class),
+						new FormalField(Boolean.class)
 
 				);
 
@@ -220,6 +225,20 @@ public class Game implements Runnable {
 				flag.y = (Integer) otherPlayerObjects[8];
 				flag.equiped = (Boolean) otherPlayerObjects[9];
 				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];
+				gameEnded = (boolean) otherPlayerObjects[11];
+
+				if (gameEnded) {
+					Object[] disconectedObjects = repository.get(Server.ACTION_SPACE)
+							.query(new ActualField("disconnect"));
+					System.out.println(disconectedObjects[0].toString());
+					switchToHome();
+					try {
+						Server.shutdownServer(repository);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -317,20 +336,19 @@ public class Game implements Runnable {
 				&& Math.abs(currentPlayer.base.y - flag.y) < dropRange
 				&& !flag.equiped && !currentPlayer.flagEquipped) {
 
-			gameLoop.stop();
-			displayWinnerPopup(winningPlayer);
+			gameEnded = true;
 
 		}
 
 		if (currentPlayer.health == 0) {
 			winningPlayer = "Red";
-			gameLoop.stop();
-			displayWinnerPopup(winningPlayer);
+
+			gameEnded = true;
 		}
 		if (otherPlayer.health == 0) {
 			winningPlayer = "Blue";
-			gameLoop.stop();
-			displayWinnerPopup(winningPlayer);
+
+			gameEnded = true;
 		}
 
 		// Remove bullets that collide with the enemy
@@ -340,7 +358,7 @@ public class Game implements Runnable {
 
 			// Check for collisions with the other player
 			if (bullet.isColliding(otherPlayer)) {
-				
+
 				System.out.println(otherPlayer.health);
 				iterator.remove();
 			}
@@ -382,13 +400,34 @@ public class Game implements Runnable {
 
 	private void displayWinnerPopup(String winner) {
 		Platform.runLater(() -> {
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setTitle("Winner!");
-			alert.setHeaderText(null);
-			alert.setContentText("Congratulations! " + winner + " You win!");
+			gameRunning = false;
+			Alert customAlert = new Alert(Alert.AlertType.CONFIRMATION);
+			customAlert.setTitle("Custom Alert");
+			customAlert.setHeaderText("Choose an action:");
 
-			alert.showAndWait();
+			ButtonType restartButton = new ButtonType("Restart");
+			ButtonType goToHomeButton = new ButtonType("Go to Home");
+
+			customAlert.getButtonTypes().setAll(restartButton, goToHomeButton);
+
+			customAlert.showAndWait().ifPresent(response -> {
+				if (response == restartButton) {
+					System.out.println("Restarting...");
+				
+				} else if (response == goToHomeButton) {
+					try {
+						switchToHome();
+						repository.get(Server.ACTION_SPACE).put("disconnect");
+						
+
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
+				}
+			});
 		});
+
 	}
 
 	private boolean isCollidingWithTiles(int newX, int newY) {
@@ -479,6 +518,19 @@ public class Game implements Runnable {
 
 	}
 
+	private void switchToHome() {
+		try {
+			Main.root = FXMLLoader.load(getClass().getResource("/application/Home.fxml"));
+			Parent root = Main.root;
+			Main.scene.setRoot(root);
+			Main.stage.show();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
 	private class GameLogic implements Runnable {
 		private Game game;
 
@@ -499,7 +551,14 @@ public class Game implements Runnable {
 				// Move the game logic here
 				game.update();
 				game.draw();
+				if (gameEnded) {
+					gameRunning = false;
+
+					game.displayWinnerPopup(winningPlayer);
+
+				}
 			}
+
 		}
 
 	}
