@@ -10,10 +10,12 @@ public class Main extends Application {
     public static Parent root; // Use Parent here
     public static Scene scene;
     public static Stage stage;
+    public static Server server;
 
     @Override
     public void start(Stage primaryStage) {
         try {
+            server = new Server();
             stage = primaryStage;
             root = FXMLLoader.load(getClass().getResource("Home.fxml"));
             scene = new Scene(root);

@@ -20,11 +20,10 @@ public class Player implements Collidable {
     public Map<String, Image> images;
     public String stringColor;
     public String lastPressed;
-    
 
     public Player(int x, int y, Base base, int height, int width, String stringColor, Map<String, Image> images,
             BulletController bulletController) {
-        this.lastPressed="W";
+        this.lastPressed = "W";
         this.bulletController = bulletController;
         this.base = base;
         this.x = x;
@@ -66,7 +65,7 @@ public class Player implements Collidable {
 
     public void draw(GraphicsContext ctx) {
         ctx.drawImage(images.get(lastPressed), x, y, width, height);
-        base.draw(ctx,this.stringColor);
+        base.draw(ctx, this.stringColor);
 
     }
 

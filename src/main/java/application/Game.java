@@ -15,6 +15,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.jspace.ActualField;
@@ -35,6 +36,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -89,8 +91,7 @@ public class Game implements Runnable {
 	volatile boolean gameEnded = false;
 
 	Space playing;
-	private int connected = 0;
-	private boolean started = false;
+
 	private int clientsJoined;
 	private String id;
 	Map<String, Player> players;
@@ -98,6 +99,7 @@ public class Game implements Runnable {
 	Player otherPlayer;
 	RemoteSpace space3;
 	RemoteSpace getting;
+	RemoteSpace actionSpace;
 	private String ip;
 
 	private GameLogic gameLogic;
@@ -111,7 +113,7 @@ public class Game implements Runnable {
 		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
 
 		space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
-
+		actionSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
 		this.id = id;
@@ -191,7 +193,6 @@ public class Game implements Runnable {
 						flag.equiped, currentPlayer.bulletController, gameEnded);
 
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -201,8 +202,6 @@ public class Game implements Runnable {
 		ScheduledExecutorService dataReceiverScheduler = Executors.newScheduledThreadPool(1);
 		dataReceiverScheduler.scheduleAtFixedRate(() -> {
 			try {
-				// System.out.println("before recieve");
-
 				Object[] otherPlayerObjects = getting.get(new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Boolean.class),
@@ -227,21 +226,7 @@ public class Game implements Runnable {
 				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];
 				gameEnded = (boolean) otherPlayerObjects[11];
 
-				if (gameEnded) {
-					Object[] disconectedObjects = repository.get(Server.ACTION_SPACE)
-							.query(new ActualField("disconnect"));
-					System.out.println(disconectedObjects[0].toString());
-					switchToHome();
-					try {
-						Server.shutdownServer(repository);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}, 0, 16, TimeUnit.MILLISECONDS);
@@ -304,7 +289,7 @@ public class Game implements Runnable {
 
 		int pickupRange = 30;
 
-		// Check if the player.get(id) is within the pickup range of the flag
+		// Check if the currentplayer is within the pickup range of the flag
 		if (ePressed) {
 			if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
 
@@ -320,7 +305,7 @@ public class Game implements Runnable {
 
 			}
 		}
-		// move flag with player.get(id)
+		// move flag with currentPLayer
 		if (currentPlayer.flagEquipped && flag.equiped) {
 			flag.x = currentPlayer.x;
 			flag.y = currentPlayer.y;
@@ -335,18 +320,19 @@ public class Game implements Runnable {
 		if (Math.abs(currentPlayer.base.x - flag.x) < dropRange
 				&& Math.abs(currentPlayer.base.y - flag.y) < dropRange
 				&& !flag.equiped && !currentPlayer.flagEquipped) {
+			winningPlayer = currentPlayer.stringColor;
 
 			gameEnded = true;
 
 		}
 
 		if (currentPlayer.health == 0) {
-			winningPlayer = "Red";
+			winningPlayer = otherPlayer.stringColor;
 
 			gameEnded = true;
 		}
 		if (otherPlayer.health == 0) {
-			winningPlayer = "Blue";
+			winningPlayer = currentPlayer.stringColor;
 
 			gameEnded = true;
 		}
@@ -359,7 +345,6 @@ public class Game implements Runnable {
 			// Check for collisions with the other player
 			if (bullet.isColliding(otherPlayer)) {
 
-				System.out.println(otherPlayer.health);
 				iterator.remove();
 			}
 
@@ -367,12 +352,9 @@ public class Game implements Runnable {
 			for (Tile tile : tiles) {
 				if (bullet.isColliding(tile)) {
 					iterator.remove();
-					// Handle tile-specific logic if needed
 				}
 			}
 		}
-		// System.out.println("Updating player at (" + currentPlayer.x + ", " +
-		// currentPlayer.y + ")");
 
 	}
 
@@ -381,18 +363,15 @@ public class Game implements Runnable {
 
 			// Clear canvas
 			ctx.clearRect(0, 0, WIDTH, HEIGHT);
-
 			otherPlayer.draw(ctx);
 			currentPlayer.draw(ctx);
-			flag.draw(ctx);
 			tiles.forEach(tile -> {
 				tile.draw(ctx);
 			});
+			flag.draw(ctx);
 
 			currentPlayer.bulletController.draw(ctx);
 			otherPlayer.bulletController.draw(ctx);
-			// System.out.println("Drawing player at (" + currentPlayer.x + ", " +
-			// currentPlayer.y + ")");
 
 		});
 
@@ -401,26 +380,58 @@ public class Game implements Runnable {
 	private void displayWinnerPopup(String winner) {
 		Platform.runLater(() -> {
 			gameRunning = false;
+
 			Alert customAlert = new Alert(Alert.AlertType.CONFIRMATION);
-			customAlert.setTitle("Custom Alert");
-			customAlert.setHeaderText("Choose an action:");
+			customAlert.setTitle("Game Done!");
+			customAlert.setHeaderText("Winner is " + winner + "Choose an action:");
 
 			ButtonType restartButton = new ButtonType("Restart");
 			ButtonType goToHomeButton = new ButtonType("Go to Home");
 
 			customAlert.getButtonTypes().setAll(restartButton, goToHomeButton);
+			AtomicBoolean stopThreadFlag = new AtomicBoolean(false);
 
+			new Thread(() -> {
+				try {
+					space3.query(new ActualField("disconnect"));
+					Main.server.shutdownServer(repository, ip);
+					switchToHome();
+					stopThreadFlag.set(true);
+
+				} catch (InterruptedException | IOException e) {
+					e.printStackTrace();
+				}
+			}).start();
+
+			new Thread(() -> {
+				try {
+					int restarts;
+					do {
+						restarts = space3.queryAll(new ActualField("restart")).size();
+						Thread.sleep(1000);
+					} while (restarts < 2 && !stopThreadFlag.get());
+					stopThreadFlag.set(true);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}).start();
 			customAlert.showAndWait().ifPresent(response -> {
+
 				if (response == restartButton) {
-					System.out.println("Restarting...");
-				
+					try {
+						space3.put("restart");
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
 				} else if (response == goToHomeButton) {
 					try {
+						stopThreadFlag.set(true);
+						space3.put("disconnect");
 						switchToHome();
-						repository.get(Server.ACTION_SPACE).put("disconnect");
-						
+						Main.server.shutdownServer(repository, ip);
 
-					} catch (InterruptedException e) {
+					} catch (InterruptedException | IOException e) {
 						e.printStackTrace();
 					}
 
@@ -524,6 +535,7 @@ public class Game implements Runnable {
 			Parent root = Main.root;
 			Main.scene.setRoot(root);
 			Main.stage.show();
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -548,7 +560,6 @@ public class Game implements Runnable {
 					e.printStackTrace();
 				}
 
-				// Move the game logic here
 				game.update();
 				game.draw();
 				if (gameEnded) {

@@ -21,74 +21,125 @@ import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import utils.utils;
 
 public class Server {
-
     static final String PLAYING_SPACE_NAME = "playing";
     static final String PING_SPACE_NAME = "ping";
     static final String SERVER_INFO_SPACE_NAME = "serverInfo";
     static final String CLIENTS_IN_SERVER = "clientsInServer";
     static final String GETTING_SPACE_NAME = "getting";
     static final String ACTION_SPACE = "action";
+    static final String ACTIVE_SERVERS = "activeServer";
+
+    static final String ip = "192.168.0.110";
+    static final String uri = "tcp://" + ip + ":9001/?keep";
 
     static ArrayList<String> clients = new ArrayList<>();
-    private String ip;
+    // private String ip;
     static ArrayList<String> activeServers = new ArrayList<>();
-    SpaceRepository repository;
+    public SpaceRepository repository;
+    private SpaceRepository repositoryOfServers;
 
-    public Server(String ip) throws InterruptedException {
-        this.ip = ip;
-
-        /*
-         * if (!Server.activeServers.contains(this.ip)) {
-         * Server.activeServers.add(this.ip);
-         * startServer(this.ip);
-         * } else {
-         * joinServer(this.ip);
-         * }
-         */
-
-    }
-
-    public SpaceRepository initializeSpaces() {
+    public Server() {
         repository = new SpaceRepository();
+        repositoryOfServers = new SpaceRepository();
         repository.add(PLAYING_SPACE_NAME, new StackSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME, new StackSpace());
         repository.add(ACTION_SPACE, new QueueSpace());
+        repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
+        repositoryOfServers.addGate(uri);
+
+    }
+
+    public SpaceRepository initializeSpaces() {
 
         return repository;
     }
 
-    public static void shutdownServer(SpaceRepository repository) throws UnknownHostException, IOException {
+    public void shutdownServer(SpaceRepository repository, String ip) throws UnknownHostException, IOException {
+        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
+        try {
+            activeServersSpace.getAll(new ActualField("new Client"));
+            activeServersSpace.get(new ActualField(ip));
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         repository.closeGates();
-        
     }
 
     public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
-        repository = initializeSpaces();
+
+        // check wether the server already exists
+        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
+
+        List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new ActualField(ip));
+        for (Object[] serverInfo : currentlyActiveServers) {
+            String activeIp = (String) serverInfo[0];
+            if (ip.equals(activeIp)) {
+                int clientsInServer = activeServersSpace.queryAll(new ActualField("new Client"))
+                        .size();
+                utils.displayMessage("this Server is active with: " + clientsInServer + " Clients");
+                return;
+            }
+        }
+        // create server
         repository.addGate("tcp://" + ip + ":9001/?keep");
-        repository.get(CLIENTS_IN_SERVER).put("new Client");
+        handlePlayerConnection(ip);
+
+        // add the ip to active servers
+        activeServersSpace.put(ip);
+        activeServersSpace.put("new Client");
+
         UUID id = UUID.randomUUID();
 
         List<Object[]> clientObjectsUpdated = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client"));
         int clientsJoined = clientObjectsUpdated.size();
-
         startGameThreads(ip, clientsJoined, id.toString(), repository);
 
     }
 
     public void joinServer(String ip) throws InterruptedException, UnknownHostException, IOException {
+        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
 
-        UUID id = UUID.randomUUID();
+        List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new ActualField(ip));
+        boolean foundServer = false;
+        for (Object[] serverInfo : currentlyActiveServers) {
+            String activeIp = (String) serverInfo[0];
 
-        handlePlayerConnection(ip);
+            if (ip.equals(activeIp)) {
+                foundServer = true;
+                // Query the number of clients in the server
+                int clientsInServer = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client")).size();
 
-        List<Object[]> clientObjectsUpdated = new RemoteSpace("tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
-                .queryAll(new ActualField("new Client"));
-        int clientsJoined = clientObjectsUpdated.size();
+                if (clientsInServer < 2) {
+                    foundServer = false;
+                    // Add the player as a client to the server
+                    handlePlayerConnection(ip);
 
-        startGameThreads(ip, clientsJoined, id.toString(), repository);
+                    // Add the players as a new Client in the active servers space
+                    activeServersSpace.put("new Client");
+
+                    UUID id = UUID.randomUUID();
+
+                    List<Object[]> clientObjectsUpdated = new RemoteSpace(
+                            "tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
+                            .queryAll(new ActualField("new Client"));
+
+                    int clientsJoined = clientObjectsUpdated.size();
+                    // Start game threads
+                    startGameThreads(ip, clientsJoined, id.toString(), repository);
+                } else {
+                    utils.displayMessage("This Server is already active with 2 clients. Try another server.");
+                    return;
+                }
+            }
+        }
+        if (foundServer) {
+            utils.displayMessage("The provided server IP is not active. Try another server or create your own.");
+        }
 
     }
 
@@ -102,7 +153,6 @@ public class Server {
         Main.root = (new BorderPane(canvas));
         Parent root = Main.root;
 
-        // The rest of your code remains unchanged
         Main.scene.setRoot(root);
         Main.stage.show();
 

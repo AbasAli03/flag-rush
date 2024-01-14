@@ -3,35 +3,35 @@ package controllers;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import application.Main;
 import application.Server;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import utils.utils;
 
 public class StartServerController {
-		
+
     @FXML
     private TextField ipTextfield;
-    
+
     public void startServer(ActionEvent event) {
-    	String ip = ipTextfield.getText().toString();
-    	System.out.println(ip);
-    	try {
-			Server server = new Server(ip);
-			server.startServer(ip);
+        String ip = ipTextfield.getText().toString();
 
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnknownHostException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }    	
-    	
+        if (utils.isValidIP(ip)) {
+            try {
+                Main.server.startServer(ip);
+            } catch (UnknownHostException e) {
+                utils.displayMessage("invalid ip, please try again!");
+            } catch (InterruptedException e) {
+                utils.displayMessage("invalid ip, please try again!");
+            } catch (IOException e) {
+                utils.displayMessage("invalid ip, please try again!");
+            }
+        } else {
+            utils.displayMessage("invalid ip, please try again!");
+        }
+
     }
-
 
 }
