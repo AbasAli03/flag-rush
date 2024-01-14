@@ -32,7 +32,7 @@ public class Server {
     static final String ACTION_SPACE = "action";
     static final String ACTIVE_SERVERS = "activeServer";
 
-    static final String ip = "192.168.0.110";
+    static final String ip = "";
     static final String uri = "tcp://" + ip + ":9001/?keep";
 
     static ArrayList<String> clients = new ArrayList<>();
