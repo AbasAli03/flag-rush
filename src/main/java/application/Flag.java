@@ -25,7 +25,7 @@ public class Flag {
 		this.width = width;
 	}
 
-	public void draw() {
+	public void draw(GraphicsContext ctx) {
 		ctx.drawImage(this.image, x, y, width, height);
 	}
 
