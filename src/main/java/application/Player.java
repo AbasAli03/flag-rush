@@ -20,9 +20,14 @@ public class Player implements Collidable {
     public Map<String, Image> images;
     public String stringColor;
     public String lastPressed;
+    public int spawnX;
+    public int spawnY;
 
     public Player(int x, int y, Base base, int height, int width, String stringColor, Map<String, Image> images,
             BulletController bulletController) {
+        this.spawnX = x;
+        this.spawnY = y;
+
         this.lastPressed = "W";
         this.bulletController = bulletController;
         this.base = base;
@@ -87,6 +92,15 @@ public class Player implements Collidable {
         } else {
             return Color.BLUE;
         }
+    }
+
+    public void restart() {
+
+        this.flagEquipped = false;
+        this.health = 100;
+        this.x = spawnX;
+        this.y = spawnY;
+
     }
 
 }
