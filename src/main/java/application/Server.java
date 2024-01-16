@@ -32,8 +32,8 @@ public class Server {
     static final String ACTION_SPACE = "action";
     static final String ACTIVE_SERVERS = "activeServer";
 
-    static final String ip = "";
-    static final String uri = "tcp://" + ip + ":9001/?keep";
+    // static final String ip = "10.209.205.74";
+    // static final String uri = "tcp://" + ip + ":9001/?keep";
 
     static ArrayList<String> clients = new ArrayList<>();
     // private String ip;
@@ -43,13 +43,13 @@ public class Server {
 
     public Server() {
         repository = new SpaceRepository();
-        repositoryOfServers = new SpaceRepository();
+        // repositoryOfServers = new SpaceRepository();
         repository.add(PLAYING_SPACE_NAME, new StackSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME, new StackSpace());
         repository.add(ACTION_SPACE, new QueueSpace());
-        repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
-        repositoryOfServers.addGate(uri);
+        // repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
+        // repositoryOfServers.addGate(uri);
 
     }
 
@@ -59,39 +59,44 @@ public class Server {
     }
 
     public void shutdownServer(SpaceRepository repository, String ip) throws UnknownHostException, IOException {
-        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
-        try {
-            activeServersSpace.getAll(new ActualField("new Client"));
-            activeServersSpace.get(new ActualField(ip));
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
+        // ACTIVE_SERVERS + "?keep");
+        // try {
+        // activeServersSpace.getAll(new ActualField("new Client"));
+        // activeServersSpace.get(new ActualField(ip));
+        // } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // }
         repository.closeGates();
     }
 
     public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
 
         // check wether the server already exists
-        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
+        // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
+        // ACTIVE_SERVERS + "?keep");
 
-        List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new ActualField(ip));
-        for (Object[] serverInfo : currentlyActiveServers) {
-            String activeIp = (String) serverInfo[0];
-            if (ip.equals(activeIp)) {
-                int clientsInServer = activeServersSpace.queryAll(new ActualField("new Client"))
-                        .size();
-                utils.displayMessage("this Server is active with: " + clientsInServer + " Clients");
-                return;
-            }
-        }
+        // List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new
+        // ActualField(ip));
+        // for (Object[] serverInfo : currentlyActiveServers) {
+        // String activeIp = (String) serverInfo[0];
+        // if (ip.equals(activeIp)) {
+        // int clientsInServer = activeServersSpace.queryAll(new ActualField("new
+        // Client"))
+        // .size();
+        // utils.displayMessage("this Server is active with: " + clientsInServer + "
+        // Clients");
+        // return;
+        // }
+        // }
         // create server
         repository.addGate("tcp://" + ip + ":9001/?keep");
         handlePlayerConnection(ip);
 
         // add the ip to active servers
-        activeServersSpace.put(ip);
-        activeServersSpace.put("new Client");
+        // activeServersSpace.put(ip);
+        // activeServersSpace.put("new Client");
 
         UUID id = UUID.randomUUID();
 
@@ -102,44 +107,46 @@ public class Server {
     }
 
     public void joinServer(String ip) throws InterruptedException, UnknownHostException, IOException {
-        Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" + ACTIVE_SERVERS + "?keep");
+        // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
+        // ACTIVE_SERVERS + "?keep");
 
-        List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new ActualField(ip));
-        boolean foundServer = false;
-        for (Object[] serverInfo : currentlyActiveServers) {
-            String activeIp = (String) serverInfo[0];
+        // List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new
+        // ActualField(ip));
+        // boolean foundServer = false;
+        // for (Object[] serverInfo : currentlyActiveServers) {
+        // String activeIp = (String) serverInfo[0];
 
-            if (ip.equals(activeIp)) {
-                foundServer = true;
-                // Query the number of clients in the server
-                int clientsInServer = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client")).size();
+        // if (ip.equals(activeIp)) {
+        // foundServer = true;
+        // Query the number of clients in the server
+        int clientsInServer = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client")).size();
 
-                if (clientsInServer < 2) {
-                    foundServer = false;
-                    // Add the player as a client to the server
-                    handlePlayerConnection(ip);
+        // if (clientsInServer < 2) {
+        // foundServer = false;
+        // Add the player as a client to the server
+        handlePlayerConnection(ip);
 
-                    // Add the players as a new Client in the active servers space
-                    activeServersSpace.put("new Client");
+        // Add the players as a new Client in the active servers space
+        // activeServersSpace.put("new Client");
 
-                    UUID id = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
 
-                    List<Object[]> clientObjectsUpdated = new RemoteSpace(
-                            "tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
-                            .queryAll(new ActualField("new Client"));
+        List<Object[]> clientObjectsUpdated = new RemoteSpace(
+                "tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
+                .queryAll(new ActualField("new Client"));
 
-                    int clientsJoined = clientObjectsUpdated.size();
-                    // Start game threads
-                    startGameThreads(ip, clientsJoined, id.toString(), repository);
-                } else {
-                    utils.displayMessage("This Server is already active with 2 clients. Try another server.");
-                    return;
-                }
-            }
-        }
-        if (foundServer) {
-            utils.displayMessage("The provided server IP is not active. Try another server or create your own.");
-        }
+        int clientsJoined = clientObjectsUpdated.size();
+        // Start game threads
+        startGameThreads(ip, clientsJoined, id.toString(), repository);
+        // } else {
+        // utils.displayMessage("This Server is already active with 2 clients. Try
+        // another server.");
+        // return;
+        // }
+        // }
+
+        // }if(foundServer){utils.displayMessage("The provided server IP is not active.
+        // Try another server or create your own.");}
 
     }
 
