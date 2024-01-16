@@ -44,9 +44,9 @@ public class Server {
     public Server() {
         repository = new SpaceRepository();
         // repositoryOfServers = new SpaceRepository();
-        repository.add(PLAYING_SPACE_NAME, new StackSpace());
+        repository.add(PLAYING_SPACE_NAME, new QueueSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
-        repository.add(GETTING_SPACE_NAME, new StackSpace());
+        repository.add(GETTING_SPACE_NAME, new QueueSpace());
         repository.add(ACTION_SPACE, new QueueSpace());
         // repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
         // repositoryOfServers.addGate(uri);
