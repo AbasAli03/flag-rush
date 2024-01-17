@@ -15,18 +15,23 @@ import application.Main;
 import javafx.application.Platform;
 
 public class MatchMakingServer extends Server implements Runnable {
-    private String ip = "";
-    private String URI = "tcp://" + ip + ":9001/?keep";
+    private static String ip = "";
+    private static String URI = "tcp://" + ip + ":9001/?keep";
     public static String ACTIVE_SERVERS = "activeServer";
     private String ACTIVE_SERVERS_URI = "tcp://" + ip + ":9001/" + ACTIVE_SERVERS + "?keep";
+    
+    
 
-    public SpaceRepository repository;
+    public static SpaceRepository repository = new SpaceRepository();
+    public static void main(String[] args) {
+        repository.add(ACTIVE_SERVERS, new SequentialSpace());
+
+        repository.addGate(URI);
+
+    }
 
     public MatchMakingServer() {
         super();
-        repository = new SpaceRepository();
-        repository.add(ACTIVE_SERVERS, new SequentialSpace());
-        repository.addGate(URI);
     }
 
     @Override
