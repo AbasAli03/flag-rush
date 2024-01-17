@@ -28,6 +28,7 @@ import org.jspace.TemplateField;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -36,6 +37,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
@@ -84,13 +86,14 @@ public class Game implements Runnable {
 	boolean sPressed = false;
 	boolean dPressed = false;
 	boolean ePressed = false;
+	boolean eRealesed = false;
 	boolean winner = false;
 	boolean spacePressed = false;
 	String lastPressed = "";
 	boolean gameRunning = false;
 	boolean disconected = false;
 
-	public volatile boolean gameEnded = false;
+	private AtomicBoolean gameEnded = new AtomicBoolean(false);
 	public volatile boolean winnerPopupDisplayed = false;
 
 	Space playing;
@@ -103,24 +106,44 @@ public class Game implements Runnable {
 	RemoteSpace space3;
 	RemoteSpace getting;
 	RemoteSpace actionSpace;
+	RemoteSpace infoSpace;
+	RemoteSpace flagSpace;
 	private String ip;
 	int gameEndedCounter = 0;
 
 	private GameLogic gameLogic;
+	private RestartButler restartButler;
+	private Thread restartButlerThread;
 	Thread gameLogicThread;
 	SpaceRepository repository;
+	boolean switchToActionCalled = false;
+	boolean flagDropped = false;
+
+	public void setGameEnded(boolean value) {
+		System.out.println("game ended before change: " + getGameEnded());
+
+		gameEnded.set(value);
+		System.out.println("game ended after change: " + getGameEnded());
+	}
+
+	public boolean getGameEnded() {
+		return gameEnded.get();
+	}
 
 	public Game(String ip, Canvas canvas, int clientsJoined, String id, SpaceRepository repository)
 			throws InterruptedException, UnknownHostException, IOException {
 		// Main.stage.setWidth(WIDTH + BOXW);
 		// Main.stage.setHeight(HEIGHT + 2 * BOXH);
+
 		gameLogic = new GameLogic(this);
 		this.repository = repository;
 		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
 		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
-
-		space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
-		actionSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
+		infoSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GAME_INFO_SPACE + "?keep");
+		this.space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
+		this.flagSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.FLAG_SPACE + "?keep");
+		// actionSpace = new RemoteSpace("tcp://" + ip + ":9001/" +
+		// Server.CLIENTS_IN_SERVER + "?keep");
 		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
 		this.id = id;
@@ -198,7 +221,17 @@ public class Game implements Runnable {
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
 						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
-						flag.equiped, currentPlayer.bulletController, gameEnded);
+						flag.equiped, currentPlayer.bulletController);
+				flagSpace.put(flag.x, flag.y, flag.equiped);
+				if (getGameEnded()) {
+					System.out.println("just putted");
+					infoSpace.put(getGameEnded());
+					checkGameEnded();
+					Thread.sleep(10000);
+					setGameEnded(false);
+					System.out.println("done sleeping");
+
+				}
 				// 8 9 10
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -215,10 +248,12 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
 						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),
-						new FormalField(Boolean.class), new FormalField(BulletController.class),
-						new FormalField(Boolean.class)
+						new FormalField(Boolean.class), new FormalField(BulletController.class)
 
 				);
+
+				Object[] flagObjects = flagSpace.get(new FormalField(Integer.class), new FormalField(Integer.class),
+						new FormalField(Boolean.class));
 
 				otherPlayer.x = (Integer) otherPlayerObjects[0];
 				otherPlayer.y = (Integer) otherPlayerObjects[1];
@@ -228,12 +263,12 @@ public class Game implements Runnable {
 				currentPlayer.health = (Integer) otherPlayerObjects[5];
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
-				flag.x = (Integer) otherPlayerObjects[7];
-				flag.y = (Integer) otherPlayerObjects[8];
+				if (flag.equiped && otherPlayer.flagEquipped) {
+					flag.x = (Integer) flagObjects[0];
+					flag.y = (Integer) flagObjects[1];
+				}
 				flag.equiped = (Boolean) otherPlayerObjects[9];
 				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];
-				gameEnded = (boolean) otherPlayerObjects[11];
-				// move flag with currentPLayer
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -257,13 +292,56 @@ public class Game implements Runnable {
 
 	}
 
-	private void update() {
-		if (gameEnded) {
-			System.out.println("if game ended");
-			displayWinnerPopup(winningPlayer);
-			winnerPopupDisplayed = true;
-			gameEndedCounter++;
+	boolean displayMessage = false;
+
+	private void checkGameEnded() {
+		if (!switchToActionCalled) {
+			restartButler = new RestartButler();
+			restartButlerThread = new Thread(restartButler);
+			restartButlerThread.start();
+			if (!displayMessage) {
+				displayMessage = true;
+				displayWinnerPopup(winningPlayer);
+				Main.scene.setOnKeyReleased(null);
+				Main.scene.setOnKeyPressed(null);
+				switchToActionCalled = true;
+
+			}
+
 		}
+	}
+
+	boolean gameEndedFr = false;
+
+	private void update() {
+
+		if (!getGameEnded()) {
+
+			switchToActionCalled = false;
+			Boolean endGame = null;
+			try {
+
+				Object[] result = infoSpace.getp(new FormalField(Boolean.class));
+
+				if (result != null) {
+					endGame = (Boolean) result[0];
+					System.out.println("not null");
+				}
+
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			if (endGame != null && endGame) {
+				System.out.println("den her 1");
+				checkGameEnded();
+
+			}
+
+			endGame = null;
+
+		}
+
 		SPEED = 5;
 
 		int deltaX = 0;
@@ -310,65 +388,75 @@ public class Game implements Runnable {
 
 		// Check if the currentplayer is within the pickup range of the flag
 		if (ePressed) {
+
 			if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
 				if (flag.equiped && currentPlayer.flagEquipped) {
 					flag.equiped = false;
 					currentPlayer.flagEquipped = false;
 
 				} else {
+
 					flag.equiped = true;
 					currentPlayer.flagEquipped = true;
+					SPEED = 1;
 
 				}
 
 			}
 		}
 		// move flag with currentPLayer
-		if (currentPlayer.flagEquipped && flag.equiped && !gameEnded) {
+		if (currentPlayer.flagEquipped && flag.equiped && !getGameEnded()) {
 			flag.x = currentPlayer.x;
 			flag.y = currentPlayer.y;
 
 		}
 
-		if (otherPlayer.flagEquipped && flag.equiped && !gameEnded) {
+		if (otherPlayer.flagEquipped && flag.equiped && !getGameEnded()) {
 			flag.x = otherPlayer.x;
 			flag.y = otherPlayer.y;
 
 		}
 
 		int dropRange = 50;
-		if (Math.abs(currentPlayer.base.x - flag.x) < dropRange
-				&& Math.abs(currentPlayer.base.y - flag.y) < dropRange
-				&& !flag.equiped && !currentPlayer.flagEquipped && !gameEnded) {
-			flag.x = flag.spawnX;
-			flag.y = flag.spawnY;
+		if (ePressed) {
 
-			winningPlayer = currentPlayer.stringColor;
-			gameEnded = true;
-			System.out.println("basedropping");
-			gameEndedCounter++;
-			gameLoop.stop();
+			if (Math.abs(currentPlayer.base.x - flag.x) < dropRange
+					&& Math.abs(currentPlayer.base.y - flag.y) < dropRange
+					&& !flag.equiped && !currentPlayer.flagEquipped && !getGameEnded() && !flagDropped) {
+				flagDropped = true;
 
+				// checkGameEnded();
+				// flag.x = flag.spawnX;
+				// flag.y = flag.spawnY;
+				winningPlayer = currentPlayer.stringColor;
+				System.out.println("den her 2");
+
+				setGameEnded(true);
+				System.out.println("basedropping");
+				System.out.println("flag dropped");
+				// restartGame();
+			}
 		}
 
-		if (currentPlayer.health == 0 && !gameEnded) {
+		if (currentPlayer.health == 0 && !getGameEnded()) {
 			currentPlayer.restart();
 			winningPlayer = otherPlayer.stringColor;
 			System.out.println("myplayer health");
-			gameEndedCounter++;
-			gameEnded = true;
-			gameLoop.stop();
+			System.out.println("den her 3");
+
+			setGameEnded(true);
+			// checkGameEnded();
+			// restartGame();
 
 		}
 
-		if (otherPlayer.health == 0 && !gameEnded) {
+		if (otherPlayer.health == 0 && !getGameEnded()) {
 			otherPlayer.restart();
 			winningPlayer = currentPlayer.stringColor;
 			System.out.println("otherplayer health");
-			gameEndedCounter++;
+			System.out.println("den her 4");
 
-			gameEnded = true;
-			gameLoop.stop();
+			setGameEnded(true);
 
 		}
 
@@ -403,7 +491,8 @@ public class Game implements Runnable {
 			tiles.forEach(tile -> {
 				tile.draw(ctx);
 			});
-
+			// System.out.println("flag is drawing at:" + flag.equiped + "(" + flag.x + ","
+			// + flag.y + ")");
 			flag.draw(ctx);
 			currentPlayer.bulletController.draw(ctx);
 			otherPlayer.bulletController.draw(ctx);
@@ -413,10 +502,6 @@ public class Game implements Runnable {
 
 	private void displayWinnerPopup(String winner) {
 		Platform.runLater(() -> {
-			if (gameEnded) {
-				gameEnded = false; // Reset the flag
-				gameLoop.stop();
-			}
 
 			Alert customAlert = new Alert(Alert.AlertType.CONFIRMATION);
 			customAlert.setTitle("Game Done!");
@@ -440,35 +525,16 @@ public class Game implements Runnable {
 				}
 			}).start();
 
-			new Thread(() -> {
-				try {
-					int restarts;
-					do {
-						restarts = space3.queryAll(new ActualField("restart")).size();
-						Thread.sleep(1000);
-					} while (restarts < 2);
-					if (restarts == 2) {
-						space3.getAll(new ActualField("restart"));
-						restartGame();
-						return;
-					}
-
-					return;
-
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}).start();
 			customAlert.showAndWait().ifPresent(response -> {
 
 				if (response == restartButton) {
+
 					try {
 						space3.put("restart");
-						restartGame();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-
+					System.out.println("i want to restart");
 				} else if (response == goToHomeButton) {
 					try {
 						stopThreadFlag.set(true);
@@ -512,6 +578,7 @@ public class Game implements Runnable {
 				break;
 			case E:
 				ePressed = false;
+				eRealesed = true;
 				break;
 			case SPACE:
 				spacePressed = false;
@@ -537,6 +604,7 @@ public class Game implements Runnable {
 				break;
 			case E:
 				ePressed = true;
+				eRealesed = false;
 				break;
 			case SPACE:
 				spacePressed = true;
@@ -546,16 +614,30 @@ public class Game implements Runnable {
 		}
 	}
 
+	public void resumeGame() {
+		System.out.println("gamed Ended. " + getGameEnded());
+
+		restartGame();
+		Platform.runLater(() -> {
+			Main.scene.setRoot(new BorderPane(canvas));
+			Main.scene.setOnKeyReleased(this::handleKeyReleased);
+			Main.scene.setOnKeyPressed(this::handleKeyPressed);
+		});
+
+	}
+
 	public void startGame() {
+		System.out.println("gamed Ended. " + getGameEnded());
+
 		Platform.runLater(() -> {
 			lastUpdateTime = System.nanoTime();
 
 			gameLoop = new AnimationTimer() {
-
 				double accumulatedTime = 0.0;
 
 				@Override
 				public void handle(long currentTime) {
+
 					double elapsedTime = (currentTime - lastUpdateTime) / (double) NANO_PER_SECOND;
 
 					accumulatedTime += elapsedTime;
@@ -574,50 +656,35 @@ public class Game implements Runnable {
 			Main.scene.setRoot(new BorderPane(canvas));
 			Main.scene.setOnKeyReleased(this::handleKeyReleased);
 			Main.scene.setOnKeyPressed(this::handleKeyPressed);
+
 			gameLoop.start();
 		});
 
 	}
 
 	private void switchToHome() {
+
 		try {
 			Main.root = FXMLLoader.load(getClass().getResource("/application/Home.fxml"));
-			Parent root = Main.root;
-			Main.scene.setRoot(root);
-			Main.stage.show();
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		Parent root = Main.root;
+		Main.scene.setRoot(root);
+		Main.stage.show();
 
 	}
 
 	public void restartGame() {
-		gameEndedCounter = 0;
-		winnerPopupDisplayed = false;
-		startGame();
 
-		// Stop the current GameLogic thread
-		gameLogic.stopThread();
+		flagDropped = false;
 
-		// Wait for the thread to finish its current iteration
-
-		try {
-			gameLogicThread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
+		flag.restart();
 		// Reset game variables and objects
 		currentPlayer.restart();
 		otherPlayer.health = 100;
-		flag.restart();
-		gameEnded = false;
-		// Create a new instance of GameLogic and start a new thread
-		gameLogic = new GameLogic(this);
-		gameLogicThread = new Thread(gameLogic);
-		gameLogicThread.start();
-
+		flagDropped = false;
+		setGameEnded(false);
 	}
 
 	public class GameLogic implements Runnable {
@@ -638,8 +705,9 @@ public class Game implements Runnable {
 
 		@Override
 		public void run() {
+			setGameEnded(false);
 			System.out.println("Game Logic Thread is running");
-			while (game.gameRunning && !stopThreadFlag.get()) {
+			while (!game.getGameEnded()) {
 
 				try {
 					Thread.sleep(100);
@@ -649,10 +717,47 @@ public class Game implements Runnable {
 
 				game.update();
 				game.draw();
-				if (stop) {
-					return;
+			}
+			try {
+				gameLogicThread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+
+	public class RestartButler implements Runnable {
+
+		@Override
+		public void run() {
+			try {
+				int restarts;
+				do {
+					restarts = space3.queryAll(new ActualField("restart")).size();
+					Thread.sleep(1000);
+				} while (restarts < 2);
+				if (restarts == 2) {
+
+					space3.getAll(new ActualField("restart"));
+					flag.x = flag.spawnX;
+					flag.y = flag.spawnY;
+					switchToActionCalled = false;
+					displayMessage = false;
+					resumeGame();
+
+					gameLogicThread = new Thread(gameLogic);
+					System.out.println("restarting...");
+					gameLogicThread.start();
+					restartButlerThread.join();
+
+					Thread.sleep(1000);
+
 				}
 
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}

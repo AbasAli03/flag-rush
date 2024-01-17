@@ -19,8 +19,8 @@ public class Flag {
 	public Flag(int x, int y, int spawnX, int spawnY, int height, int width) {
 		this.x = x;
 		this.y = y;
-		this.x = spawnX;
-		this.y = spawnY;
+		this.spawnX = x;
+		this.spawnY = y;
 		this.height = height;
 		this.width = width;
 	}

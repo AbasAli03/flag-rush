@@ -27,11 +27,12 @@ public class Server {
     static final String PLAYING_SPACE_NAME = "playing";
     static final String PING_SPACE_NAME = "ping";
     static final String SERVER_INFO_SPACE_NAME = "serverInfo";
-    static final String CLIENTS_IN_SERVER = "clientsInServer";
+    public static final String CLIENTS_IN_SERVER = "clientsInServer";
     static final String GETTING_SPACE_NAME = "getting";
     static final String ACTION_SPACE = "action";
     static final String ACTIVE_SERVERS = "activeServer";
-
+    static final String GAME_INFO_SPACE = "infoSpace";
+    static final String FLAG_SPACE = "flagSpace";
     // static final String ip = "10.209.205.74";
     // static final String uri = "tcp://" + ip + ":9001/?keep";
 
@@ -48,6 +49,9 @@ public class Server {
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME, new QueueSpace());
         repository.add(ACTION_SPACE, new QueueSpace());
+        repository.add(GAME_INFO_SPACE, new SequentialSpace());
+        repository.add(FLAG_SPACE, new StackSpace());
+
         // repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
         // repositoryOfServers.addGate(uri);
 
