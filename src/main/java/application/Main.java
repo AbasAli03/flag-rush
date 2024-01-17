@@ -9,7 +9,7 @@ import server.MatchMakingServer;
 import server.Server;
 
 public class Main extends Application {
-    public static Parent root; // Use Parent here
+    public static Parent root;
     public static Scene scene;
     public static Stage stage;
     public static Server server;
@@ -37,8 +37,17 @@ public class Main extends Application {
         launch(args);
     }
 
-    // Add this method to set the root
     public static void setRoot(Parent newRoot) {
         root = newRoot;
     }
+
+    public static void setScene(Scene newScene) {
+        scene = newScene;
+        stage.setScene(scene);
+    }
+
+    public static void setStage(Stage newStage) {
+        stage = newStage;
+    }
 }
+

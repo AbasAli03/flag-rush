@@ -365,7 +365,7 @@ public class Game implements Runnable {
 			lastPressed = "D";
 			deltaX = SPEED;
 
-		} else if (spacePressed && !ePressed) {
+		} else if (spacePressed) {
 			int speed = 5;
 			int delay = 7;
 

@@ -17,9 +17,11 @@ import org.jspace.StackSpace;
 
 import application.Game;
 import application.Main;
+import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -160,17 +162,34 @@ public class Server {
     private void startGameThreads(String ip, int clientsJoined, String id, SpaceRepository repository)
             throws InterruptedException, UnknownHostException, IOException {
 
-        Canvas canvas = new Canvas(1000, 700);
-        Game game = new Game(ip, canvas, clientsJoined, id, repository);
+        Platform.runLater(() -> {
+            try {
+                Canvas canvas = new Canvas(1000, 700);
+                Game game = new Game(ip, canvas, clientsJoined, id, repository);
 
-        // Set the root to the new BorderPane
-        Main.root = (new BorderPane(canvas));
-        Parent root = Main.root;
+                // Set the root to the new BorderPane
+                Main.setRoot(new BorderPane(canvas));
+                Parent root = Main.root;
 
-        Main.scene.setRoot(root);
-        Main.stage.show();
+                // Check if Main.scene is not null before updating its root
+                if (Main.scene != null) {
+                    Main.scene.setRoot(root);
+                } else {
+                    // If Main.scene is null, you might want to create a new Scene
+                    Main.setScene(new Scene(root, 1000, 700));
+                }
 
-        new Thread(game).start();
+                // Update the existing stage
+                Main.stage.show(); // Ensure the stage is visible
+                Main.stage.sizeToScene(); // Resize the stage to fit the new scene
+
+                // Start the game thread
+                new Thread(game).start();
+
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void handlePlayerConnection(String ip) throws InterruptedException, UnknownHostException, IOException {
