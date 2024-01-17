@@ -5,16 +5,20 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import server.MatchMakingServer;
+import server.Server;
 
 public class Main extends Application {
     public static Parent root; // Use Parent here
     public static Scene scene;
     public static Stage stage;
     public static Server server;
+    public static MatchMakingServer matchMakingServer;
 
     @Override
     public void start(Stage primaryStage) {
         try {
+            matchMakingServer = new MatchMakingServer();
             server = new Server();
             stage = primaryStage;
 

@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import application.Main;
-import application.Server;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import server.Server;
 import utils.utils;
 
 public class StartServerController {

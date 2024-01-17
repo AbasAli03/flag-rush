@@ -1,5 +1,6 @@
 package application;
 
+import server.Server;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
@@ -45,6 +46,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import server.Server;
 
 public class Game implements Runnable {
 	private ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -388,7 +390,6 @@ public class Game implements Runnable {
 
 		// Check if the currentplayer is within the pickup range of the flag
 		if (ePressed) {
-
 			if (Math.abs(currentPlayer.x - flag.x) < pickupRange && Math.abs(currentPlayer.y - flag.y) < pickupRange) {
 				if (flag.equiped && currentPlayer.flagEquipped) {
 					flag.equiped = false;
@@ -408,7 +409,6 @@ public class Game implements Runnable {
 		if (currentPlayer.flagEquipped && flag.equiped && !getGameEnded()) {
 			flag.x = currentPlayer.x;
 			flag.y = currentPlayer.y;
-
 		}
 
 		if (otherPlayer.flagEquipped && flag.equiped && !getGameEnded()) {

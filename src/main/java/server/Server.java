@@ -1,4 +1,4 @@
-package application;
+package server;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -15,6 +15,8 @@ import org.jspace.Space;
 import org.jspace.SpaceRepository;
 import org.jspace.StackSpace;
 
+import application.Game;
+import application.Main;
 import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -24,16 +26,16 @@ import javafx.stage.Stage;
 import utils.utils;
 
 public class Server {
-    static final String PLAYING_SPACE_NAME = "playing";
+    public static final String PLAYING_SPACE_NAME = "playing";
     static final String PING_SPACE_NAME = "ping";
     static final String SERVER_INFO_SPACE_NAME = "serverInfo";
     public static final String CLIENTS_IN_SERVER = "clientsInServer";
-    static final String GETTING_SPACE_NAME = "getting";
+    public static final String GETTING_SPACE_NAME = "getting";
     static final String ACTION_SPACE = "action";
     static final String ACTIVE_SERVERS = "activeServer";
-    static final String GAME_INFO_SPACE = "infoSpace";
-    static final String FLAG_SPACE = "flagSpace";
-    // static final String ip = "10.209.205.74";
+    public static final String GAME_INFO_SPACE = "infoSpace";
+    public static final String FLAG_SPACE = "flagSpace";
+    // static final String ip = "";
     // static final String uri = "tcp://" + ip + ":9001/?keep";
 
     static ArrayList<String> clients = new ArrayList<>();
@@ -43,6 +45,13 @@ public class Server {
     private SpaceRepository repositoryOfServers;
 
     public Server() {
+
+        // repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
+        // repositoryOfServers.addGate(uri);
+
+    }
+
+    public SpaceRepository initializeSpaces() {
         repository = new SpaceRepository();
         // repositoryOfServers = new SpaceRepository();
         repository.add(PLAYING_SPACE_NAME, new QueueSpace());
@@ -51,14 +60,6 @@ public class Server {
         repository.add(ACTION_SPACE, new QueueSpace());
         repository.add(GAME_INFO_SPACE, new SequentialSpace());
         repository.add(FLAG_SPACE, new StackSpace());
-
-        // repositoryOfServers.add(ACTIVE_SERVERS, new SequentialSpace());
-        // repositoryOfServers.addGate(uri);
-
-    }
-
-    public SpaceRepository initializeSpaces() {
-
         return repository;
     }
 
@@ -76,7 +77,7 @@ public class Server {
     }
 
     public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
-
+        repository = initializeSpaces();
         // check wether the server already exists
         // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
         // ACTIVE_SERVERS + "?keep");
@@ -123,7 +124,9 @@ public class Server {
         // if (ip.equals(activeIp)) {
         // foundServer = true;
         // Query the number of clients in the server
-        int clientsInServer = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client")).size();
+        Space activeServersSpace = new RemoteSpace("tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep");
+
+        int clientsInServer = activeServersSpace.queryAll(new ActualField("new Client")).size();
 
         // if (clientsInServer < 2) {
         // foundServer = false;
