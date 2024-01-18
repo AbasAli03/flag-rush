@@ -20,13 +20,10 @@ public class StartServerController {
 
         if (utils.isValidIP(ip)) {
             try {
-                Main.server.startServer(ip);
+                Main.server.startServer(ip,false);
             } catch (UnknownHostException e) {
-                utils.displayMessage("invalid ip, please try again!");
             } catch (InterruptedException e) {
-                utils.displayMessage("invalid ip, please try again!");
             } catch (IOException e) {
-                utils.displayMessage("invalid ip, please try again!");
             }
         } else {
             utils.displayMessage("invalid ip, please try again!");

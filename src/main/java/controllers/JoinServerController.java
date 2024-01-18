@@ -20,7 +20,7 @@ public class JoinServerController {
 
     try {
       if (utils.isValidIP(ip)) {
-        Main.server.joinServer(ip);
+        Main.server.joinServer(ip,false);
       } else {
         utils.displayMessage("invalid ip, please try again!");
       }

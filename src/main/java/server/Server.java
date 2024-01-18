@@ -78,7 +78,8 @@ public class Server {
         repository.closeGates();
     }
 
-    public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
+    public void startServer(String ip, boolean joiningRandom)
+            throws InterruptedException, UnknownHostException, IOException {
         repository = initializeSpaces();
         RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
 
@@ -104,7 +105,7 @@ public class Server {
 
             // create server
             repository.addGate("tcp://" + ip + ":9001/?keep");
-            handlePlayerConnection(ip);
+            handlePlayerConnection(ip, joiningRandom);
 
             UUID id = UUID.randomUUID();
 
@@ -117,7 +118,8 @@ public class Server {
 
     }
 
-    public void joinServer(String ip) throws InterruptedException, UnknownHostException, IOException {
+    public void joinServer(String ip, boolean joiningRandom)
+            throws InterruptedException, UnknownHostException, IOException {
         RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
 
         List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip), new ActualField("new Client"));
@@ -137,7 +139,7 @@ public class Server {
         System.out.println("occurrences after check in join: " + occurrences);
 
         if (serverExists && occurrences == 1) {
-            handlePlayerConnection(ip);
+            handlePlayerConnection(ip, joiningRandom);
 
             UUID id = UUID.randomUUID();
 
@@ -194,34 +196,44 @@ public class Server {
         });
     }
 
-    private void handlePlayerConnection(String ip) throws InterruptedException, UnknownHostException, IOException {
+    private void handlePlayerConnection(String ip, boolean joiningRandom)
+            throws InterruptedException, UnknownHostException, IOException {
 
         RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep");
         RemoteSpace activeServers = new RemoteSpace(MatchMakingServer.ACTIVE_SERVERS_URI);
         RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
-        List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip), new ActualField("new Client"));
-
-        int occurrences = 0;
         boolean serverExists = false;
-        for (Object[] serverInfo : currentlyActiveServers) {
-            String activeIp = (String) serverInfo[0];
-            // Check if the ip matches the activeIp
-            if (ip.equals(activeIp)) {
-                serverExists = true;
-                occurrences++;
-            }
-        }
-        if (!serverExists) {
-            System.out.println("new put in all servers");
+        int occurrences = 0;
+
+        if (!joiningRandom) {
             allServers.put(ip, "new Client");
             System.out.println(" handleplayer connection "
                     + allServers.queryAll(new ActualField(ip), new ActualField("new Client")).size());
 
             space.put("new Client");
-
-        } else if (occurrences == 1) {
+        } else {
             space.put("new Client");
+            /*
+            List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip),
+                    new ActualField("new Client"));
 
+            for (Object[] serverInfo : currentlyActiveServers) {
+                String activeIp = (String) serverInfo[0];
+                // Check if the ip matches the activeIp
+                if (ip.equals(activeIp)) {
+                    serverExists = true;
+                    occurrences++;
+                }
+            }
+            if (!serverExists) {
+                System.out.println("new put in all servers");
+                allServers.put(ip, "new Client");
+                System.out.println(" handleplayer connection "
+                        + allServers.queryAll(new ActualField(ip), new ActualField("new Client")).size());
+
+                space.put("new Client");
+
+            } */
         }
 
     }
