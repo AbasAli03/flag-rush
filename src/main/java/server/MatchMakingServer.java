@@ -14,7 +14,7 @@ import org.jspace.SpaceRepository;
 import application.Main;
 
 public class MatchMakingServer implements Runnable {
-    private static String ip = "172.23.176.1";
+    private static String ip = "";
     private static String URI = "tcp://" + ip + ":9001/?keep";
     public static String ACTIVE_SERVERS = "activeServer";
     public static String ALL_SERVERS = "allServer";
