@@ -200,7 +200,7 @@ public class Game implements Runnable {
 
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, currentPlayer.bulletController);
+						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, currentPlayer.bulletController, flag.equiped);
 				flagSpace.put(flag.x, flag.y, flag.equiped);
 				if (getGameEnded()) {
 					infoSpace.put(getGameEnded());
@@ -223,7 +223,8 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
-						new FormalField(String.class),new FormalField(BulletController.class)
+						new FormalField(String.class),new FormalField(BulletController.class),
+						new FormalField(Boolean.class)
 
 				);
 
@@ -238,7 +239,7 @@ public class Game implements Runnable {
 				currentPlayer.health = (Integer) otherPlayerObjects[5];
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
-				flag.equiped = (Boolean) flagObjects[2];
+				flag.equiped = (Boolean) otherPlayerObjects[8];
 				if (flag.equiped && otherPlayer.flagEquipped) {
 					flag.x = (Integer) flagObjects[0];
 					flag.y = (Integer) flagObjects[1];
@@ -246,7 +247,7 @@ public class Game implements Runnable {
 				}
 				
 				otherPlayer.bulletController = (BulletController) otherPlayerObjects[7];
-
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

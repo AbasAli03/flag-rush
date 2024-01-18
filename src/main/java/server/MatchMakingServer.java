@@ -22,10 +22,11 @@ public class MatchMakingServer implements Runnable {
     public static SpaceRepository repository = new SpaceRepository();
 
     public static void main(String[] args) {
+        
         repository.add(ACTIVE_SERVERS, new SequentialSpace());
         repository.add(ALL_SERVERS, new SequentialSpace());
         repository.addGate(URI);
-
+        System.out.println("server is running...");
 
     }
 
