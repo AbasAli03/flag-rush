@@ -22,7 +22,7 @@ public class ClientRun extends Server implements Runnable {
                 RemoteSpace activeServers = new RemoteSpace(MatchMakingServer.ACTIVE_SERVERS_URI);
 
                 String hostIp = InetAddress.getLocalHost().getHostAddress().toString();
-
+                System.out.println(hostIp);
                 activeServers.put(hostIp, "new Client");
                 List<Object[]> activeServerObjects = activeServers.queryAll(new FormalField(String.class),
                         new ActualField("new Client"));
