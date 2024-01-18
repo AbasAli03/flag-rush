@@ -59,7 +59,6 @@ public class MatchMakingServer implements Runnable {
                     try {
                         String serverIp = (String) activeServerObjects.get(0)[0];
                         Main.server.startServer(serverIp, true);
-                        //allServers.put(serverIp, "new Client");
 
                     } catch (InterruptedException | IOException e) {
                         e.printStackTrace();
