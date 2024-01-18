@@ -1,4 +1,4 @@
-package application;
+package models;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -21,14 +21,13 @@ public class Bullet {
 		this.width = 5;
 		this.height = 5;
 		this.stringColor = "BLACK";
-		this.damage=10;
+		this.damage = 10;
 	}
-	
-	  public Color getColor() {
-          return Color.BLACK;
-      
-  }
 
+	public Color getColor() {
+		return Color.BLACK;
+
+	}
 
 	public void draw(GraphicsContext ctx) {
 		ctx.setFill(getColor());

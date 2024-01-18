@@ -45,6 +45,13 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import models.Base;
+import models.Bullet;
+import models.BulletController;
+import models.Flag;
+import models.Grid;
+import models.Player;
+import models.Tile;
 import server.Server;
 
 public class Game implements Runnable {

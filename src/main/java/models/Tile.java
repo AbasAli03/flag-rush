@@ -1,17 +1,15 @@
-package application;
-
+package models;
 
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
 
-public class Tile implements Collidable{
+public class Tile implements Collidable {
 	private Image image = new Image("./assets/tile.png");
 	public int x;
 	public int y;
 	public int height;
 	public int width;
-	
 
 	public Tile(int x, int y, int height, int width) {
 		this.image = image;
@@ -23,7 +21,7 @@ public class Tile implements Collidable{
 
 	public void draw(GraphicsContext ctx) {
 		ctx.setFill(Color.CHOCOLATE);
-		ctx.drawImage(this.image,x, y, width, height);
+		ctx.drawImage(this.image, x, y, width, height);
 	}
 
 	@Override
@@ -46,5 +44,4 @@ public class Tile implements Collidable{
 		return height;
 	}
 
-	
 }

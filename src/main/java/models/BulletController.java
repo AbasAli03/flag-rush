@@ -1,4 +1,4 @@
-package application;
+package models;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,8 +55,6 @@ public class BulletController {
 		return false;
 
 	}
-
-
 
 	public void removeBullet(Bullet bullet) {
 		this.bullets.remove(bullet);

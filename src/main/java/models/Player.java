@@ -1,7 +1,8 @@
-package application;
+package models;
 
 import java.util.Map;
 
+import application.Game;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
