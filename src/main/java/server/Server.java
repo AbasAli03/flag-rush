@@ -143,16 +143,16 @@ public class Server {
 
             List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip),
                     new ActualField("new Client"));
-            if (currentlyActiveServers.size()==1) {
-                occurrences=1;
-                serverExists=true;
-            }else if (currentlyActiveServers.size()==2) {
-                serverExists=true;
-                occurrences=2;
+            if (currentlyActiveServers.size() == 1) {
+                occurrences = 1;
+                serverExists = true;
+            } else if (currentlyActiveServers.size() == 2) {
+                serverExists = true;
+                occurrences = 2;
             }
             System.out.println("query all in join");
-          
-            System.out.println(currentlyActiveServers.size()); 
+
+            System.out.println(currentlyActiveServers.size());
 
             if (serverExists && occurrences == 1) {
 
@@ -170,7 +170,7 @@ public class Server {
                 startGameThreads(ip, clientsJoined, id.toString(), repository);
 
             } else if (!serverExists) {
-                
+
                 utils.displayMessage(
                         "This server doesn't exist");
             } else if (serverExists && occurrences == 2) {
@@ -188,7 +188,12 @@ public class Server {
 
             int clientsJoined = clientObjectsUpdated.size();
             // Start game threads
-            startGameThreads(ip, clientsJoined, id.toString(), repository);
+            if (clientsJoined > 2) {
+                utils.displayMessage("Server is active with 2 clients");
+            } else {
+                startGameThreads(ip, clientsJoined, id.toString(), repository);
+
+            }
         }
 
     }
@@ -242,7 +247,12 @@ public class Server {
 
             space.put("new Client");
         } else {
-            space.put("new Client");
+            if (space.queryAll(new ActualField("new Client")).size() > 2) {
+                utils.displayMessage("Server is active with 2 clients");
+            } else {
+                space.put("new Client");
+
+            }
             /*
              * List<Object[]> currentlyActiveServers = allServers.queryAll(new
              * ActualField(ip),
