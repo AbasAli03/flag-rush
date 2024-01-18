@@ -3,7 +3,6 @@ package models;
 import javafx.scene.canvas.*;
 
 import javafx.scene.image.*;
-import javafx.scene.paint.Color;
 
 public class Flag {
 

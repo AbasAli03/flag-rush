@@ -1,50 +1,33 @@
 package application;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 import org.jspace.RemoteSpace;
 import org.jspace.Space;
 import org.jspace.SpaceRepository;
-import org.jspace.TemplateField;
-
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import models.Base;
 import models.Bullet;
 import models.BulletController;
@@ -55,7 +38,6 @@ import models.Tile;
 import server.Server;
 
 public class Game implements Runnable {
-	private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
 	public static final int HEIGHT = 700;
 	public static final int WIDTH = 1000;

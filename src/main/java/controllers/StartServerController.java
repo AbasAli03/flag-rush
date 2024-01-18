@@ -7,7 +7,6 @@ import application.Main;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
-import server.Server;
 import utils.utils;
 
 public class StartServerController {

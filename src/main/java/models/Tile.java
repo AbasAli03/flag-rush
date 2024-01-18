@@ -12,7 +12,6 @@ public class Tile implements Collidable {
 	public int width;
 
 	public Tile(int x, int y, int height, int width) {
-		this.image = image;
 		this.x = x;
 		this.y = y;
 		this.height = height;

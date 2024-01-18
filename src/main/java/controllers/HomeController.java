@@ -1,13 +1,6 @@
 package controllers;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
-
-import org.jspace.ActualField;
-import org.jspace.FormalField;
-
 import application.Main;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
