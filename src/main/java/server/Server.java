@@ -175,17 +175,14 @@ public class Server {
                 Main.setRoot(new BorderPane(canvas));
                 Parent root = Main.root;
 
-                // Check if Main.scene is not null before updating its root
                 if (Main.scene != null) {
                     Main.scene.setRoot(root);
                 } else {
-                    // If Main.scene is null, you might want to create a new Scene
                     Main.setScene(new Scene(root, 1000, 700));
                 }
 
-                // Update the existing stage
                 Main.stage.show();
-                // Main.stage.sizeToScene();
+                Main.stage.sizeToScene();
 
                 // Start the game thread
                 new Thread(game).start();
