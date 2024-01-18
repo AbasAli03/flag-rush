@@ -3,6 +3,7 @@ package utils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
@@ -17,10 +18,12 @@ public class utils {
     }
 
     public static void displayMessage(String message) {
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Invalid Input");
-        alert.setHeaderText("Invalid Input");
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Invalid Input");
+            alert.setHeaderText("Invalid Input");
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 }

@@ -8,10 +8,6 @@ import java.util.List;
 import org.jspace.ActualField;
 import org.jspace.FormalField;
 import org.jspace.RemoteSpace;
-import org.jspace.SequentialSpace;
-import org.jspace.SpaceRepository;
-
-import javafx.application.Platform;
 
 public class ClientRun extends Server implements Runnable {
     public ClientRun() {
@@ -20,20 +16,23 @@ public class ClientRun extends Server implements Runnable {
 
     @Override
     public void run() {
-        try {
+        boolean clientConnected = false;
+        while (!clientConnected) {
+            try {
+                RemoteSpace activeServers = new RemoteSpace(MatchMakingServer.ACTIVE_SERVERS_URI);
 
-            RemoteSpace activeServers = new RemoteSpace(MatchMakingServer.ACTIVE_SERVERS_URI);
+                String hostIp = InetAddress.getLocalHost().getHostAddress().toString();
 
-            String hostIp = InetAddress.getLocalHost().getHostAddress().toString();
+                activeServers.put(hostIp, "new Client");
+                List<Object[]> activeServerObjects = activeServers.queryAll(new FormalField(String.class),
+                        new ActualField("new Client"));
+                String activehostIp = (String) activeServerObjects.get(0)[0];
 
-            activeServers.put(hostIp, "new Client");
-            System.out.println("Clients put");
-            // Sleep for a while before checking again
-            Thread.sleep(5000); // Adjust the sleep duration as needed
+                clientConnected = true;
 
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
+            } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
         }
-
     }
 }

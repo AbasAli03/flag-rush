@@ -1,6 +1,5 @@
 package application;
 
-import server.Server;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.URL;
@@ -266,8 +265,8 @@ public class Game implements Runnable {
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
 				if (flag.equiped && otherPlayer.flagEquipped) {
-					flag.x = (Integer) flagObjects[0];
-					flag.y = (Integer) flagObjects[1];
+					flag.x = (Integer) otherPlayerObjects[7];
+					flag.y = (Integer) otherPlayerObjects[8];
 				}
 				flag.equiped = (Boolean) otherPlayerObjects[9];
 				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];

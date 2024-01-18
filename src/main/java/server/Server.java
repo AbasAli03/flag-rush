@@ -80,82 +80,84 @@ public class Server {
 
     public void startServer(String ip) throws InterruptedException, UnknownHostException, IOException {
         repository = initializeSpaces();
-        // check wether the server already exists
-        // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
-        // ACTIVE_SERVERS + "?keep");
+        RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
 
-        // List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new
-        // ActualField(ip));
-        // for (Object[] serverInfo : currentlyActiveServers) {
-        // String activeIp = (String) serverInfo[0];
-        // if (ip.equals(activeIp)) {
-        // int clientsInServer = activeServersSpace.queryAll(new ActualField("new
-        // Client"))
-        // .size();
-        // utils.displayMessage("this Server is active with: " + clientsInServer + "
-        // Clients");
-        // return;
-        // }
-        // }
-        // create server
-        repository.addGate("tcp://" + ip + ":9001/?keep");
-        handlePlayerConnection(ip);
+        List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip), new ActualField("new Client"));
+        int occurrences = 0;
+        boolean serverExists = false;
+        for (Object[] serverInfo : currentlyActiveServers) {
+            String activeIp = (String) serverInfo[0];
 
-        // add the ip to active servers
-        // activeServersSpace.put(ip);
-        // activeServersSpace.put("new Client");
+            // Check if the ip matches the activeIp
+            if (ip.equals(activeIp)) {
+                serverExists = true;
+                occurrences++;
+            }
+        }
+        if (serverExists) {
+            System.out.println("occurrences: " + occurrences);
+            utils.displayMessage(
+                    "This Server is active with: " + occurrences + " " + (occurrences == 1 ? "Client" : "Clients"));
 
-        UUID id = UUID.randomUUID();
+        } else {
+            System.out.println("occurrences: " + occurrences);
 
-        List<Object[]> clientObjectsUpdated = repository.get(CLIENTS_IN_SERVER).queryAll(new ActualField("new Client"));
-        int clientsJoined = clientObjectsUpdated.size();
-        startGameThreads(ip, clientsJoined, id.toString(), repository);
+            // create server
+            repository.addGate("tcp://" + ip + ":9001/?keep");
+            handlePlayerConnection(ip);
+
+            UUID id = UUID.randomUUID();
+
+            List<Object[]> clientObjectsUpdated = repository.get(CLIENTS_IN_SERVER)
+                    .queryAll(new ActualField("new Client"));
+            int clientsJoined = clientObjectsUpdated.size();
+            startGameThreads(ip, clientsJoined, id.toString(), repository);
+            System.out.println("ocureenses in starrtserver: " + occurrences);
+        }
 
     }
 
     public void joinServer(String ip) throws InterruptedException, UnknownHostException, IOException {
-        // Space activeServersSpace = new RemoteSpace("tcp://" + Server.ip + ":9001/" +
-        // ACTIVE_SERVERS + "?keep");
+        RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
 
-        // List<Object[]> currentlyActiveServers = activeServersSpace.queryAll(new
-        // ActualField(ip));
-        // boolean foundServer = false;
-        // for (Object[] serverInfo : currentlyActiveServers) {
-        // String activeIp = (String) serverInfo[0];
+        List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip), new ActualField("new Client"));
+        System.out.println("query all in join");
+        int counter = 0;
+        int occurrences = 0;
+        boolean serverExists = false;
+        for (Object[] serverInfo : currentlyActiveServers) {
+            String activeIp = (String) serverInfo[0];
 
-        // if (ip.equals(activeIp)) {
-        // foundServer = true;
-        // Query the number of clients in the server
-        Space activeServersSpace = new RemoteSpace("tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep");
+            // Check if the ip matches the activeIp
+            if (ip.equals(activeIp)) {
+                serverExists = true;
+                occurrences++;
+            }
+        }
+        System.out.println("occurrences after check in join: " + occurrences);
 
-        int clientsInServer = activeServersSpace.queryAll(new ActualField("new Client")).size();
+        if (serverExists && occurrences == 1) {
+            handlePlayerConnection(ip);
 
-        // if (clientsInServer < 2) {
-        // foundServer = false;
-        // Add the player as a client to the server
-        handlePlayerConnection(ip);
+            UUID id = UUID.randomUUID();
 
-        // Add the players as a new Client in the active servers space
-        // activeServersSpace.put("new Client");
+            List<Object[]> clientObjectsUpdated = new RemoteSpace(
+                    "tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
+                    .queryAll(new ActualField("new Client"));
 
-        UUID id = UUID.randomUUID();
+            int clientsJoined = clientObjectsUpdated.size();
+            System.out.println("clients joined " + clientsJoined);
+            // Start game threads
+            startGameThreads(ip, clientsJoined, id.toString(), repository);
 
-        List<Object[]> clientObjectsUpdated = new RemoteSpace(
-                "tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep")
-                .queryAll(new ActualField("new Client"));
+        } else if (!serverExists) {
 
-        int clientsJoined = clientObjectsUpdated.size();
-        // Start game threads
-        startGameThreads(ip, clientsJoined, id.toString(), repository);
-        // } else {
-        // utils.displayMessage("This Server is already active with 2 clients. Try
-        // another server.");
-        // return;
-        // }
-        // }
-
-        // }if(foundServer){utils.displayMessage("The provided server IP is not active.
-        // Try another server or create your own.");}
+            utils.displayMessage(
+                    "This server doesn't exist");
+        } else if (serverExists && occurrences == 2) {
+            utils.displayMessage(
+                    "This Server is active with: " + occurrences + " " + (occurrences == 1 ? "Client" : "Clients"));
+        }
 
     }
 
@@ -180,8 +182,8 @@ public class Server {
                 }
 
                 // Update the existing stage
-                Main.stage.show(); // Ensure the stage is visible
-                Main.stage.sizeToScene(); // Resize the stage to fit the new scene
+                Main.stage.show();
+                // Main.stage.sizeToScene();
 
                 // Start the game thread
                 new Thread(game).start();
@@ -195,7 +197,32 @@ public class Server {
     private void handlePlayerConnection(String ip) throws InterruptedException, UnknownHostException, IOException {
 
         RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + CLIENTS_IN_SERVER + "?keep");
-        space.put("new Client");
+        RemoteSpace activeServers = new RemoteSpace(MatchMakingServer.ACTIVE_SERVERS_URI);
+        RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
+        List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip), new ActualField("new Client"));
+
+        int occurrences = 0;
+        boolean serverExists = false;
+        for (Object[] serverInfo : currentlyActiveServers) {
+            String activeIp = (String) serverInfo[0];
+            // Check if the ip matches the activeIp
+            if (ip.equals(activeIp)) {
+                serverExists = true;
+                occurrences++;
+            }
+        }
+        if (!serverExists) {
+            System.out.println("new put in all servers");
+            allServers.put(ip, "new Client");
+            System.out.println(" handleplayer connection "
+                    + allServers.queryAll(new ActualField(ip), new ActualField("new Client")).size());
+
+            space.put("new Client");
+
+        } else if (occurrences == 1) {
+            space.put("new Client");
+
+        }
 
     }
 

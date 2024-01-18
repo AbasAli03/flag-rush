@@ -18,8 +18,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         try {
-            matchMakingServer = new MatchMakingServer();
             server = new Server();
+
             stage = primaryStage;
 
             root = FXMLLoader.load(getClass().getResource("Home.fxml"));
@@ -50,4 +50,3 @@ public class Main extends Application {
         stage = newStage;
     }
 }
-
