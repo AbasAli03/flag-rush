@@ -135,26 +135,27 @@ public class Server {
     public void joinServer(String ip, boolean joiningRandom)
             throws InterruptedException, UnknownHostException, IOException {
         if (joiningRandom) {
+            int counter = 0;
+            int occurrences = 0;
+            boolean serverExists = false;
+
             RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
 
             List<Object[]> currentlyActiveServers = allServers.queryAll(new ActualField(ip),
                     new ActualField("new Client"));
-            System.out.println("query all in join");
-            int counter = 0;
-            int occurrences = 0;
-            boolean serverExists = false;
-            for (Object[] serverInfo : currentlyActiveServers) {
-                String activeIp = (String) serverInfo[0];
-
-                // Check if the ip matches the activeIp
-                if (ip.equals(activeIp)) {
-                    serverExists = true;
-                    occurrences++;
-                }
+            if (currentlyActiveServers.size()==1) {
+                occurrences=1;
+                serverExists=true;
+            }else if (currentlyActiveServers.size()==2) {
+                serverExists=true;
+                occurrences=2;
             }
-            System.out.println("occurrences after check in join: " + occurrences);
+            System.out.println("query all in join");
+          
+            System.out.println(currentlyActiveServers.size()); 
 
             if (serverExists && occurrences == 1) {
+
                 handlePlayerConnection(ip, joiningRandom);
 
                 UUID id = UUID.randomUUID();
@@ -169,7 +170,7 @@ public class Server {
                 startGameThreads(ip, clientsJoined, id.toString(), repository);
 
             } else if (!serverExists) {
-
+                
                 utils.displayMessage(
                         "This server doesn't exist");
             } else if (serverExists && occurrences == 2) {
