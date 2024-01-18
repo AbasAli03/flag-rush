@@ -20,7 +20,7 @@ public class StartServerController {
 
         if (utils.isValidIP(ip)) {
             try {
-                Main.server.startServer(ip,false);
+                Main.server.startServer(ip, false);
             } catch (UnknownHostException e) {
             } catch (InterruptedException e) {
             } catch (IOException e) {

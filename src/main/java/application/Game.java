@@ -151,7 +151,8 @@ public class Game implements Runnable {
 		this.space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 		this.flagSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.FLAG_SPACE + "?keep");
 		// actionSpace = new RemoteSpace("tcp://" + ip + ":9001/" +
-		// Server.CLIENTS_IN_SERVER + "?keep");
+		// Server.CLIENTS_IN_SERVER + "?keep")
+		System.out.println(space3.queryAll(new ActualField("new Client")));
 		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
 		this.id = id;

@@ -14,7 +14,7 @@ import org.jspace.SpaceRepository;
 import application.Main;
 
 public class MatchMakingServer implements Runnable {
-    private static String ip = "192.168.50.190";
+    private static String ip = "172.23.176.1";
     private static String URI = "tcp://" + ip + ":9001/?keep";
     public static String ACTIVE_SERVERS = "activeServer";
     public static String ALL_SERVERS = "allServer";
@@ -61,10 +61,9 @@ public class MatchMakingServer implements Runnable {
                     clientConnected = true;
                     try {
                         String serverIp = (String) activeServerObjects.get(0)[0];
-                        Main.server.startServer(serverIp,true);
-                        allServers.put(serverIp,"new Client");
+                        Main.server.startServer(serverIp, true);
+                        allServers.put(serverIp, "new Client");
                         System.out.println("Player 1 connected");
-
 
                     } catch (InterruptedException | IOException e) {
                         e.printStackTrace();
@@ -74,7 +73,7 @@ public class MatchMakingServer implements Runnable {
                     String existingServerIp = (String) activeServerObjects.get(0)[0];
                     clientConnected = true;
                     try {
-                        Main.server.joinServer(existingServerIp,true);
+                        Main.server.joinServer(existingServerIp, true);
                         System.out.println("else inside matchmaking is running");
 
                         allServers.put(existingServerIp, "new Client");
