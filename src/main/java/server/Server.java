@@ -24,26 +24,19 @@ import utils.utils;
 
 public class Server {
     public static final String PLAYING_SPACE_NAME = "playing";
-    static final String PING_SPACE_NAME = "ping";
-    static final String SERVER_INFO_SPACE_NAME = "serverInfo";
     public static final String CLIENTS_IN_SERVER = "clientsInServer";
     public static final String GETTING_SPACE_NAME = "getting";
     static final String ACTION_SPACE = "action";
-    static final String ACTIVE_SERVERS = "activeServer";
     public static final String GAME_INFO_SPACE = "infoSpace";
     public static final String FLAG_SPACE = "flagSpace";
-    static ArrayList<String> clients = new ArrayList<>();
-    static ArrayList<String> activeServers = new ArrayList<>();
     public SpaceRepository repository;
 
     public Server() {
-
 
     }
 
     public SpaceRepository initializeSpaces() {
         repository = new SpaceRepository();
-        // repositoryOfServers = new SpaceRepository();
         repository.add(PLAYING_SPACE_NAME, new QueueSpace());
         repository.add(CLIENTS_IN_SERVER, new SequentialSpace());
         repository.add(GETTING_SPACE_NAME, new QueueSpace());
@@ -54,7 +47,7 @@ public class Server {
     }
 
     public void shutdownServer(SpaceRepository repository, String ip) throws UnknownHostException, IOException {
- 
+
         repository.closeGates();
     }
 
@@ -126,7 +119,6 @@ public class Server {
                 serverExists = true;
                 occurrences = 2;
             }
-
 
             if (serverExists && occurrences == 1) {
 
@@ -213,7 +205,6 @@ public class Server {
             RemoteSpace allServers = new RemoteSpace(MatchMakingServer.ALL_SERVERS_URI);
             allServers.put(ip, "new Client");
 
-
             space.put("new Client");
         } else {
             if (space.queryAll(new ActualField("new Client")).size() > 2) {
@@ -222,7 +213,7 @@ public class Server {
                 space.put("new Client");
 
             }
-            
+
         }
 
     }

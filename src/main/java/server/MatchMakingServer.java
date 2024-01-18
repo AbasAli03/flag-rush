@@ -26,7 +26,6 @@ public class MatchMakingServer implements Runnable {
         repository.add(ALL_SERVERS, new SequentialSpace());
         repository.addGate(URI);
 
-        System.out.println("Server is running...");
 
     }
 
@@ -54,7 +53,6 @@ public class MatchMakingServer implements Runnable {
                             new ActualField("new Client"));
                 }
 
-                System.out.println("active servers in side matchmaking server " + activeServerObjects.size());
                 if (activeServerObjects.size() == 1
                         && (serverObject == null || !serverObject[0].equals(activeServerObjects.get(0)[0]))) {
                     clientConnected = true;
@@ -62,7 +60,6 @@ public class MatchMakingServer implements Runnable {
                         String serverIp = (String) activeServerObjects.get(0)[0];
                         Main.server.startServer(serverIp, true);
                         //allServers.put(serverIp, "new Client");
-                        System.out.println("Player 1 connected");
 
                     } catch (InterruptedException | IOException e) {
                         e.printStackTrace();
@@ -73,10 +70,8 @@ public class MatchMakingServer implements Runnable {
                     clientConnected = true;
                     try {
                         Main.server.joinServer(existingServerIp, true);
-                        System.out.println("else inside matchmaking is running");
 
                         allServers.put(existingServerIp, "new Client");
-                        System.out.println("Player 2 connected");
 
                     } catch (InterruptedException | IOException e) {
                         e.printStackTrace();

@@ -86,20 +86,19 @@ public class Game implements Runnable {
 	private AtomicBoolean gameEnded = new AtomicBoolean(false);
 	public volatile boolean winnerPopupDisplayed = false;
 
-	Space playing;
 
 	private int clientsJoined;
 	private String id;
 	Map<String, Player> players;
-	Player currentPlayer, ogCurrentPlayer;
-	Player otherPlayer, ogOtherPlayer;
-	RemoteSpace space3;
+	Player currentPlayer;
+	Player otherPlayer;
+	RemoteSpace clientSpace;
 	RemoteSpace getting;
 	RemoteSpace actionSpace;
+	RemoteSpace playing;
 	RemoteSpace infoSpace;
 	RemoteSpace flagSpace;
 	private String ip;
-	int gameEndedCounter = 0;
 
 	private GameLogic gameLogic;
 	private RestartButler restartButler;
@@ -110,10 +109,8 @@ public class Game implements Runnable {
 	boolean flagDropped = false;
 
 	public void setGameEnded(boolean value) {
-		System.out.println("game ended before change: " + getGameEnded());
 
 		gameEnded.set(value);
-		System.out.println("game ended after change: " + getGameEnded());
 	}
 
 	public boolean getGameEnded() {
@@ -122,20 +119,13 @@ public class Game implements Runnable {
 
 	public Game(String ip, Canvas canvas, int clientsJoined, String id, SpaceRepository repository)
 			throws InterruptedException, UnknownHostException, IOException {
-		// Main.stage.setWidth(WIDTH + BOXW);
-		// Main.stage.setHeight(HEIGHT + 2 * BOXH);
 
 		gameLogic = new GameLogic(this);
 		this.repository = repository;
-		RemoteSpace space = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
-		RemoteSpace space4 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
 		infoSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GAME_INFO_SPACE + "?keep");
-		this.space3 = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
+		this.clientSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.CLIENTS_IN_SERVER + "?keep");
 		this.flagSpace = new RemoteSpace("tcp://" + ip + ":9001/" + Server.FLAG_SPACE + "?keep");
-		// actionSpace = new RemoteSpace("tcp://" + ip + ":9001/" +
-		// Server.CLIENTS_IN_SERVER + "?keep")
-		System.out.println(space3.queryAll(new ActualField("new Client")));
-		List<Object[]> clientObjects = space3.queryAll(new ActualField("new Client"));
+		List<Object[]> clientObjects = clientSpace.queryAll(new ActualField("new Client"));
 		this.clientsJoined = clientObjects.size();
 		this.id = id;
 		players = new HashMap<>();
@@ -156,21 +146,20 @@ public class Game implements Runnable {
 		player = new Player(40, 40, new Base(40, 40), BOXW, BOXH, "BLUE", bluePlayer, bulletController1);
 		player2 = new Player(WIDTH - 100, HEIGHT - 100, new Base(WIDTH - 100, HEIGHT - 100), BOXW, BOXH, "RED",
 				redPlayer, bulletController2);
-		ogCurrentPlayer = player;
-		ogOtherPlayer = player2;
+	
 		flag = new Flag(WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2, BOXW / 2, BOXH / 2);
 		if (clientsJoined == 1) {
 			currentPlayer = player;
 			otherPlayer = player2;
-			this.getting = space4;
-			this.playing = space;
+			this.getting = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
+			this.playing = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
 
 		} else if (clientsJoined == 2) {
 
 			currentPlayer = player2;
 			otherPlayer = player;
-			this.getting = space;
-			this.playing = space4;
+			this.getting = new RemoteSpace("tcp://" + ip + ":9001/" + Server.PLAYING_SPACE_NAME + "?keep");
+			this.playing = new RemoteSpace("tcp://" + ip + ":9001/" + Server.GETTING_SPACE_NAME + "?keep");
 
 		}
 		initializeGrid();
@@ -185,7 +174,7 @@ public class Game implements Runnable {
 			if (clientsJoined < 2) {
 				System.out.println("Waiting for players");
 				try {
-					List<Object[]> clientObjectsUpdated = space3.queryAll(new ActualField("new Client"));
+					List<Object[]> clientObjectsUpdated = clientSpace.queryAll(new ActualField("new Client"));
 					this.clientsJoined = clientObjectsUpdated.size();
 
 				} catch (InterruptedException e) {
@@ -211,19 +200,15 @@ public class Game implements Runnable {
 
 			try {
 				playing.put(currentPlayer.x, currentPlayer.y, currentPlayer.height, currentPlayer.width,
-						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, flag.x, flag.y,
-						flag.equiped, currentPlayer.bulletController);
+						currentPlayer.flagEquipped, otherPlayer.health, currentPlayer.lastPressed, currentPlayer.bulletController);
 				flagSpace.put(flag.x, flag.y, flag.equiped);
 				if (getGameEnded()) {
-					System.out.println("just putted");
 					infoSpace.put(getGameEnded());
 					checkGameEnded();
 					Thread.sleep(10000);
 					setGameEnded(false);
-					System.out.println("done sleeping");
 
 				}
-				// 8 9 10
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -238,8 +223,7 @@ public class Game implements Runnable {
 						new FormalField(Integer.class), new FormalField(Integer.class),
 						new FormalField(Integer.class), new FormalField(Boolean.class),
 						new FormalField(Integer.class),
-						new FormalField(String.class), new FormalField(Integer.class), new FormalField(Integer.class),
-						new FormalField(Boolean.class), new FormalField(BulletController.class)
+						new FormalField(String.class),new FormalField(BulletController.class)
 
 				);
 
@@ -254,12 +238,14 @@ public class Game implements Runnable {
 				currentPlayer.health = (Integer) otherPlayerObjects[5];
 
 				otherPlayer.lastPressed = (String) otherPlayerObjects[6];
+				flag.equiped = (Boolean) flagObjects[2];
 				if (flag.equiped && otherPlayer.flagEquipped) {
-					flag.x = (Integer) otherPlayerObjects[7];
-					flag.y = (Integer) otherPlayerObjects[8];
+					flag.x = (Integer) flagObjects[0];
+					flag.y = (Integer) flagObjects[1];
+					
 				}
-				flag.equiped = (Boolean) otherPlayerObjects[9];
-				otherPlayer.bulletController = (BulletController) otherPlayerObjects[10];
+				
+				otherPlayer.bulletController = (BulletController) otherPlayerObjects[7];
 
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -316,7 +302,6 @@ public class Game implements Runnable {
 
 				if (result != null) {
 					endGame = (Boolean) result[0];
-					System.out.println("not null");
 				}
 
 			} catch (InterruptedException e) {
@@ -324,7 +309,6 @@ public class Game implements Runnable {
 			}
 
 			if (endGame != null && endGame) {
-				System.out.println("den her 1");
 				checkGameEnded();
 
 			}
@@ -414,36 +398,28 @@ public class Game implements Runnable {
 					&& !flag.equiped && !currentPlayer.flagEquipped && !getGameEnded() && !flagDropped) {
 				flagDropped = true;
 
-				// checkGameEnded();
-				// flag.x = flag.spawnX;
-				// flag.y = flag.spawnY;
+			
 				winningPlayer = currentPlayer.stringColor;
-				System.out.println("den her 2");
 
 				setGameEnded(true);
-				System.out.println("basedropping");
-				System.out.println("flag dropped");
-				// restartGame();
+		
 			}
 		}
 
 		if (currentPlayer.health == 0 && !getGameEnded()) {
 			currentPlayer.restart();
 			winningPlayer = otherPlayer.stringColor;
-			System.out.println("myplayer health");
-			System.out.println("den her 3");
+		
 
 			setGameEnded(true);
-			// checkGameEnded();
-			// restartGame();
+	
 
 		}
 
 		if (otherPlayer.health == 0 && !getGameEnded()) {
 			otherPlayer.restart();
 			winningPlayer = currentPlayer.stringColor;
-			System.out.println("otherplayer health");
-			System.out.println("den her 4");
+
 
 			setGameEnded(true);
 
@@ -456,7 +432,6 @@ public class Game implements Runnable {
 
 			// Check for collisions with the other player
 			if (bullet.isColliding(otherPlayer)) {
-				System.out.println("other player health: " + otherPlayer.health);
 				iterator.remove();
 			}
 
@@ -480,8 +455,7 @@ public class Game implements Runnable {
 			tiles.forEach(tile -> {
 				tile.draw(ctx);
 			});
-			// System.out.println("flag is drawing at:" + flag.equiped + "(" + flag.x + ","
-			// + flag.y + ")");
+		
 			flag.draw(ctx);
 			currentPlayer.bulletController.draw(ctx);
 			otherPlayer.bulletController.draw(ctx);
@@ -504,7 +478,7 @@ public class Game implements Runnable {
 
 			new Thread(() -> {
 				try {
-					space3.query(new ActualField("disconnect"));
+					clientSpace.query(new ActualField("disconnect"));
 					Main.server.shutdownServer(repository, ip);
 					switchToHome();
 					stopThreadFlag.set(true);
@@ -519,15 +493,14 @@ public class Game implements Runnable {
 				if (response == restartButton) {
 
 					try {
-						space3.put("restart");
+						clientSpace.put("restart");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					System.out.println("i want to restart");
 				} else if (response == goToHomeButton) {
 					try {
 						stopThreadFlag.set(true);
-						space3.put("disconnect");
+						clientSpace.put("disconnect");
 						switchToHome();
 						Main.server.shutdownServer(repository, ip);
 
@@ -604,7 +577,6 @@ public class Game implements Runnable {
 	}
 
 	public void resumeGame() {
-		System.out.println("gamed Ended. " + getGameEnded());
 
 		restartGame();
 		Platform.runLater(() -> {
@@ -616,7 +588,6 @@ public class Game implements Runnable {
 	}
 
 	public void startGame() {
-		System.out.println("gamed Ended. " + getGameEnded());
 
 		Platform.runLater(() -> {
 			lastUpdateTime = System.nanoTime();
@@ -695,7 +666,6 @@ public class Game implements Runnable {
 		@Override
 		public void run() {
 			setGameEnded(false);
-			System.out.println("Game Logic Thread is running");
 			while (!game.getGameEnded()) {
 
 				try {
@@ -710,7 +680,6 @@ public class Game implements Runnable {
 			try {
 				gameLogicThread.join();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -724,12 +693,12 @@ public class Game implements Runnable {
 			try {
 				int restarts;
 				do {
-					restarts = space3.queryAll(new ActualField("restart")).size();
+					restarts = clientSpace.queryAll(new ActualField("restart")).size();
 					Thread.sleep(1000);
 				} while (restarts < 2);
 				if (restarts == 2) {
 
-					space3.getAll(new ActualField("restart"));
+					clientSpace.getAll(new ActualField("restart"));
 					flag.x = flag.spawnX;
 					flag.y = flag.spawnY;
 					switchToActionCalled = false;
